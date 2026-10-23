@@ -1,11 +1,8 @@
-import { randomUUID } from 'node:crypto';
-
-import type { Controllers } from '../../src/controllers';
 import { isRecord } from '../../src/helpers/guards';
 import { invalidPagingCases } from '../data/paging';
-import { assertErrorBody, dataList, nonEmptyString } from '../support/common';
+import { assertErrorBody, dataList, recordId } from '../support/common';
 import { expect, lane, resetTest, test } from '../support/fixtures';
-import { freshBodaEstimate } from './estimate';
+import { bookCash } from './trip';
 
 test('TC-LST-01 list rider trips', {
   tag: [lane.stateful, lane.smoke, lane.trips, lane.rider],
@@ -36,8 +33,10 @@ resetTest('TC-LST-03 filter by status', {
   tag: [lane.stateful, lane.trips, lane.rider],
 }, async ({ actors, controllers }) => {
   // Book two trips, then cancel one.
-  const requestedId = await bookCash(controllers, actors.sarah.token);
-  const cancelledId = await bookCash(controllers, actors.sarah.token);
+  const requested = await bookCash(controllers, actors.sarah.token);
+  const requestedId = recordId(requested.body, requested.failureMessage);
+  const toCancel = await bookCash(controllers, actors.sarah.token);
+  const cancelledId = recordId(toCancel.body, toCancel.failureMessage);
   const cancelled = await controllers.trips.cancel(cancelledId, {
     auth: { token: actors.sarah.token },
     body: { reason: 'Changed plans' },
@@ -130,26 +129,13 @@ resetTest('TC-LST-08 Brian does not see Sarah\'s trip', {
   tag: [lane.stateful, lane.security],
 }, async ({ actors, controllers }) => {
   // Sarah books. Brian has no trips of his own.
-  const tripId = await bookCash(controllers, actors.sarah.token);
+  const booked = await bookCash(controllers, actors.sarah.token);
+  const tripId = recordId(booked.body, booked.failureMessage);
   const result = await controllers.trips.list({ auth: { token: actors.brian.token } });
   expect(result.status, result.failureMessage).toBe(200);
   const page = tripPage(result.body, result.failureMessage);
   expect(page.rows.map((row) => row.id), result.failureMessage).not.toContain(tripId);
 });
-
-const bookCash = async (controllers: Controllers, token: string): Promise<string> => {
-  const estimate = await freshBodaEstimate(controllers, token);
-  const result = await controllers.trips.create({
-    auth: { token },
-    idempotencyKey: randomUUID(),
-    body: { estimate_id: estimate.id, payment_method: 'cash' },
-  });
-  expect(result.status, result.failureMessage).toBe(201);
-  expect(isRecord(result.body), result.failureMessage).toBe(true);
-  const trip = isRecord(result.body) ? result.body : {};
-  expect(nonEmptyString(trip.id), result.failureMessage).toBe(true);
-  return typeof trip.id === 'string' ? trip.id : '';
-};
 
 interface TripPage {
   readonly page: unknown;

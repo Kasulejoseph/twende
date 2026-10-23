@@ -8,6 +8,8 @@ TC-TOP-08 is not this defect. The same idempotency key with a different amount r
 
 DEF-003 is separate. The second page of `GET /v1/trips` is empty while `total` says those trips exist.
 
+DEF-004 is separate. Brian Okello (`+256700100487`) can read a trip that Sarah booked.
+
 ## DEF-001 Replay of the same top-up credits the wallet twice
 
 **Title:** Same idempotency key and body returns the original top-up but credits the wallet again
@@ -105,3 +107,29 @@ Found by TC-TOP-09.
 4. `GET /v1/trips?page=2&page_size=1` with the same token.
 
 Found by TC-LST-04.
+
+## DEF-004 Another rider can read a trip they do not own
+
+**Title:** `GET /v1/trips/{trip_id}` returns Sarah's trip to Brian
+
+**Description:** Sarah books a cash trip. Brian calls `GET /v1/trips/{trip_id}` with that id and his own bearer token. The sandbox returns 200 and the full trip, including pickup and dropoff. The trip is not hidden as not found.
+
+**Severity:** Critical. Any rider who knows a trip id can read another rider's trip.
+
+**Expected results:**
+
+- Status is 404, not 200 and not 403.
+- `error.code` is `TRIP_NOT_FOUND`.
+- The body is only the error object. It does not include pickup, driver, or phone.
+
+**Actual results:**
+
+- Brian's request returned 200 for `trp_4682A3025A18`.
+- The body was Sarah's trip: status `requested`, service `boda`, pickup Acacia Mall (`0.33495, 32.59352`), dropoff Ntinda Shopping Complex (`0.35402, 32.61498`), fare 5200 UGX, `payment_method` `cash`, `driver` null.
+
+**Steps to reproduce:**
+
+1. Book a cash trip for Sarah. `POST /v1/fare-estimates` for a boda from Acacia Mall (`0.33495, 32.59352`) to Ntinda (`0.35402, 32.61498`), then `POST /v1/trips` with a new `Idempotency-Key` and `{ "estimate_id": "<that estimate>", "payment_method": "cash" }`.
+2. `GET /v1/trips/{trip_id}` with Brian's bearer token and the id from step 1.
+
+Found by TC-GET-03.

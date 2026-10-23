@@ -6,9 +6,10 @@ import type { ApiResult } from '../../src/client/api-client';
 import { isRecord } from '../../src/helpers/guards';
 import type { PaymentMethod } from '../../src/types/api';
 import { scheduleBoundaryCases, scheduledTripLeadMinutes } from '../data/schedules';
-import { assertErrorBody, balanceOf, errorCode, nonEmptyString, sarahWallet } from '../support/common';
+import { assertErrorBody, balanceOf, errorCode, recordId, sarahWallet } from '../support/common';
 import { expect, lane, resetTest, test } from '../support/fixtures';
 import { fareAmount, fareCurrency, freshBodaEstimate } from './estimate';
+import { tripRecord } from './trip';
 
 const expiryBufferMs = 15_000;
 
@@ -273,17 +274,6 @@ const book = (
 const plus0300 = (instant: Date): string => {
   const shifted = new Date(instant.getTime() + 3 * 60 * 60 * 1000);
   return `${shifted.toISOString().slice(0, -1)}+03:00`;
-};
-
-const tripRecord = (body: unknown, failureMessage: string): Record<string, unknown> => {
-  expect(isRecord(body), failureMessage).toBe(true);
-  return isRecord(body) ? body : {};
-};
-
-const recordId = (body: unknown, failureMessage: string): string => {
-  const trip = tripRecord(body, failureMessage);
-  expect(nonEmptyString(trip.id), failureMessage).toBe(true);
-  return typeof trip.id === 'string' ? trip.id : '';
 };
 
 const listTotal = async (controllers: Controllers, token: string): Promise<number> => {

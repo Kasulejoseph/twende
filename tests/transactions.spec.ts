@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type { Controllers } from '../src/controllers';
 import type { AuthOverride } from '../src/controllers/auth';
 import { isRecord } from '../src/helpers/guards';
-import { assertErrorBody, balanceOf, dataList, mtnBody, nonEmptyString, sarahWallet } from './support/common';
+import { assertErrorBody, balanceOf, dataList, mtnBody, recordId, sarahWallet } from './support/common';
 import { expect, lane, resetTest, test } from './support/fixtures';
 
 const acacia = { lat: 0.33495, lng: 32.59352 } as const;
@@ -102,13 +102,6 @@ const ledgerView = (body: unknown, failureMessage: string): LedgerView => {
     rows,
     signedSum,
   };
-};
-
-const recordId = (body: unknown, failureMessage: string): string => {
-  expect(isRecord(body), failureMessage).toBe(true);
-  const record = isRecord(body) ? body : {};
-  expect(nonEmptyString(record.id), failureMessage).toBe(true);
-  return typeof record.id === 'string' ? record.id : '';
 };
 
 const fareAmount = (body: unknown, failureMessage: string): number => {

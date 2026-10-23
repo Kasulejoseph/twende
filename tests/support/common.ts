@@ -8,6 +8,13 @@ import type { TopUpRequest } from '../../src/types/api';
 export const nonEmptyString = (value: unknown): boolean =>
   typeof value === 'string' && value.length > 0;
 
+export const recordId = (body: unknown, failureMessage: string): string => {
+  expect(isRecord(body), failureMessage).toBe(true);
+  const record = isRecord(body) ? body : {};
+  expect(nonEmptyString(record.id), failureMessage).toBe(true);
+  return typeof record.id === 'string' ? record.id : '';
+};
+
 export const dataList = (body: unknown, failureMessage: string): readonly Record<string, unknown>[] => {
   expect(isRecord(body), failureMessage).toBe(true);
   if (!isRecord(body)) {
