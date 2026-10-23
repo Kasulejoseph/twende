@@ -1,7 +1,6 @@
-import type { ApiResult } from '../../src/client/api-client';
-import { assertErrorBody, errorCode, recordId } from '../support/common';
+import { recordId } from '../support/common';
 import { expect, lane, test } from '../support/fixtures';
-import { bookCash, tripRecord } from './trip';
+import { bookCash, expectTripError, tripRecord } from './trip';
 
 test('TC-GET-01 get own trip', {
   tag: [lane.stateful, lane.smoke, lane.trips, lane.rider],
@@ -38,9 +37,3 @@ test.fixme('TC-GET-03 other rider trip is not found', {
   const result = await controllers.trips.get(tripId, { token: actors.brian.token });
   expectTripError(result, 404, 'TRIP_NOT_FOUND');
 });
-
-const expectTripError = (result: ApiResult, status: number, code: string): void => {
-  expect(result.status, result.failureMessage).toBe(status);
-  assertErrorBody(result.body, result.failureMessage);
-  expect(errorCode(result.body), result.failureMessage).toBe(code);
-};

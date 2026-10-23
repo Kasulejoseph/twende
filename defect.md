@@ -10,6 +10,8 @@ DEF-003 is separate. The second page of `GET /v1/trips` is empty while `total` s
 
 DEF-004 is separate. Brian Okello (`+256700100487`) can read a trip that Sarah booked.
 
+DEF-005 is separate. Sarah can cancel a trip after Joseph Ssemanda has completed it.
+
 ## DEF-001 Replay of the same top-up credits the wallet twice
 
 **Title:** Same idempotency key and body returns the original top-up but credits the wallet again
@@ -133,3 +135,33 @@ Found by TC-LST-04.
 2. `GET /v1/trips/{trip_id}` with Brian's bearer token and the id from step 1.
 
 Found by TC-GET-03.
+
+## DEF-005 A completed trip can still be cancelled
+
+**Title:** `POST /v1/trips/{trip_id}/cancel` returns 200 after the driver has completed the trip
+
+**Description:** Sarah books a cash trip. Joseph accepts, arrives, starts, and completes it. Sarah then cancels with an empty body. The sandbox returns 200 and sets the status to `cancelled`. The status history keeps `completed` and appends `cancelled` after it. `cancel_reason` is null.
+
+**Severity:** Major. A completed trip is not final, so a rider can cancel a trip the driver has already finished.
+
+**Expected results:**
+
+- Status is 409.
+- `error.code` is `TRIP_COMPLETED`.
+- The trip stays `completed`.
+
+**Actual results:**
+
+- Cancel returned 200 for `trp_AFD59AD69C84`.
+- `status` was `cancelled` and `cancel_reason` was null.
+- `status_history` was `requested`, `accepted`, `arrived`, `in_progress`, `completed`, then `cancelled`.
+- The assigned driver was Joseph Ssemanda, plate `UFA 412K`.
+
+**Steps to reproduce:**
+
+1. `POST /v1/_reset` with a valid `X-Candidate-Key`.
+2. Book a cash trip for Sarah. `POST /v1/fare-estimates` for a boda from Acacia Mall (`0.33495, 32.59352`) to Ntinda (`0.35402, 32.61498`), then `POST /v1/trips` with a new `Idempotency-Key` and `{ "estimate_id": "<that estimate>", "payment_method": "cash" }`.
+3. As Joseph, `POST /v1/driver/trips/{trip_id}/accept`, then `arrive`, `start`, and `complete`.
+4. As Sarah, `POST /v1/trips/{trip_id}/cancel` with `{}`.
+
+Found by TC-CAN-05.

@@ -6,10 +6,10 @@ import type { ApiResult } from '../../src/client/api-client';
 import { isRecord } from '../../src/helpers/guards';
 import type { PaymentMethod } from '../../src/types/api';
 import { scheduleBoundaryCases, scheduledTripLeadMinutes } from '../data/schedules';
-import { assertErrorBody, balanceOf, errorCode, recordId, sarahWallet } from '../support/common';
+import { assertErrorBody, balanceOf, recordId, sarahWallet } from '../support/common';
 import { expect, lane, resetTest, test } from '../support/fixtures';
 import { fareAmount, fareCurrency, freshBodaEstimate } from './estimate';
-import { tripRecord } from './trip';
+import { expectTripError, tripRecord } from './trip';
 
 const expiryBufferMs = 15_000;
 
@@ -283,10 +283,4 @@ const listTotal = async (controllers: Controllers, token: string): Promise<numbe
   const body = isRecord(listed.body) ? listed.body : {};
   expect(typeof body.total, listed.failureMessage).toBe('number');
   return typeof body.total === 'number' ? body.total : 0;
-};
-
-const expectTripError = (result: ApiResult, status: number, code: string): void => {
-  expect(result.status, result.failureMessage).toBe(status);
-  assertErrorBody(result.body, result.failureMessage);
-  expect(errorCode(result.body), result.failureMessage).toBe(code);
 };

@@ -19,6 +19,7 @@ export const lane = {
   transaction: '@transaction',
   e2e: '@e2e',
   trips: '@trips',
+  cancel: '@cancel',
   fareEstimate: '@fare-estimate',
 } as const;
 

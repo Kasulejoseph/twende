@@ -5,7 +5,14 @@ import { expect } from '@playwright/test';
 import type { ApiResult } from '../../src/client/api-client';
 import type { Controllers } from '../../src/controllers';
 import { isRecord } from '../../src/helpers/guards';
+import { assertErrorBody, errorCode } from '../support/common';
 import { freshBodaEstimate } from './estimate';
+
+export const expectTripError = (result: ApiResult, status: number, code: string): void => {
+  expect(result.status, result.failureMessage).toBe(status);
+  assertErrorBody(result.body, result.failureMessage);
+  expect(errorCode(result.body), result.failureMessage).toBe(code);
+};
 
 export const tripRecord = (body: unknown, failureMessage: string): Record<string, unknown> => {
   expect(isRecord(body), failureMessage).toBe(true);
