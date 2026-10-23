@@ -1,7 +1,7 @@
 import type { AuthOverride } from '../src/controllers/auth';
 import { isRecord } from '../src/helpers/guards';
-import { assertErrorBody } from './support/common';
-import { expect, lane, test } from './support/fixtures';
+import { assertErrorBody, errorCode, walletBalance } from './support/common';
+import { expect, lane, resetTest, test } from './support/fixtures';
 
 const unauthorisedRows = (token: string): readonly { readonly name: string; readonly auth: AuthOverride }[] => [
   { name: 'missing key', auth: { token, sendCandidateKey: false } },
@@ -9,12 +9,9 @@ const unauthorisedRows = (token: string): readonly { readonly name: string; read
   { name: 'missing authorization', auth: { sendAuthorization: false } },
 ];
 
-test('TC-ME-01 valid rider profile and starting wallet', {
+resetTest('TC-ME-01 valid rider profile and starting wallet', {
   tag: [lane.stateful, lane.smoke, lane.billing, lane.rider],
 }, async ({ actors, controllers }) => {
-  const reset = await controllers.sandbox.reset();
-  expect(reset.status, reset.failureMessage).toBe(200);
-
   const result = await controllers.rider.me({ token: actors.sarah.token });
   expect(result.status, result.failureMessage).toBe(200);
 
@@ -25,12 +22,9 @@ test('TC-ME-01 valid rider profile and starting wallet', {
   expect(rider.currency, result.failureMessage).toBe('UGX');
 });
 
-test('TC-ME-02 Brian starting wallet', {
+resetTest('TC-ME-02 Brian starting wallet', {
   tag: [lane.stateful, lane.billing, lane.rider],
 }, async ({ actors, controllers }) => {
-  const reset = await controllers.sandbox.reset();
-  expect(reset.status, reset.failureMessage).toBe(200);
-
   const result = await controllers.rider.me({ token: actors.brian.token });
   expect(result.status, result.failureMessage).toBe(200);
 
@@ -71,16 +65,12 @@ interface RiderView {
 const riderView = (body: unknown, failureMessage: string): RiderView => {
   expect(isRecord(body), failureMessage).toBe(true);
   const profile = isRecord(body) ? body : {};
-  expect(isRecord(profile.wallet), failureMessage).toBe(true);
   const wallet = isRecord(profile.wallet) ? profile.wallet : {};
 
   return {
     name: profile.name,
     phone: profile.phone,
-    balance: wallet.balance,
+    balance: walletBalance(body, failureMessage),
     currency: wallet.currency,
   };
 };
-
-const errorCode = (body: unknown): unknown =>
-  isRecord(body) && isRecord(body.error) ? body.error.code : undefined;

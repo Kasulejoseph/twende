@@ -46,7 +46,7 @@ export class ApiClient {
       method: call.method,
       headers: this.headersFor(call),
       params: definedQuery(call.query),
-      data: call.rawBody ?? call.body,
+      data: requestData(call),
     });
     const body = await readBody(response);
     const result = toResult(call, response, body, this.secrets);
@@ -79,6 +79,15 @@ export class ApiClient {
     return headers;
   }
 }
+
+const requestData = (call: ApiCall): Buffer | unknown => {
+  if (call.rawBody === undefined) {
+    return call.body;
+  }
+
+  // Playwright re-encodes a string when Content-Type is JSON and the text is not valid JSON.
+  return Buffer.from(call.rawBody);
+};
 
 const definedQuery = (query: ApiCall['query']): Record<string, QueryValue> | undefined => {
   if (query === undefined) {

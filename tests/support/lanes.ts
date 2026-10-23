@@ -10,6 +10,12 @@ export const lane = {
   billing: '@billing',
   rider: '@rider',
   driver: '@driver',
+  wallet: '@wallet',
+  topups: '@topups',
+  boundary: '@boundary',
+  idempotency: '@idempotency',
+  concurrency: '@concurrency',
+  bug: '@bug',
 } as const;
 
 export type Lane = (typeof lane)[keyof typeof lane];

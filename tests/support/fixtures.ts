@@ -23,5 +23,13 @@ export const test = base.extend<FrameworkFixtures>({
   },
 });
 
+export const resetTest = test.extend<{ resetSandbox: void }>({
+  resetSandbox: [async ({ controllers }, use): Promise<void> => {
+    const reset = await controllers.sandbox.reset();
+    expect(reset.status, reset.failureMessage).toBe(200);
+    await use();
+  }, { auto: true }],
+});
+
 export { expect };
 export { lane } from './lanes';

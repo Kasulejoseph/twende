@@ -22,6 +22,17 @@ export const dataList = (body: unknown, failureMessage: string): readonly Record
   });
 };
 
+export const errorCode = (body: unknown): unknown =>
+  isRecord(body) && isRecord(body.error) ? body.error.code : undefined;
+
+export const walletBalance = (body: unknown, failureMessage: string): unknown => {
+  expect(isRecord(body), failureMessage).toBe(true);
+  const profile = isRecord(body) ? body : {};
+  expect(isRecord(profile.wallet), failureMessage).toBe(true);
+  const wallet = isRecord(profile.wallet) ? profile.wallet : {};
+  return wallet.balance;
+};
+
 export const assertErrorBody = (body: unknown, failureMessage: string): void => {
   expect(isRecord(body), failureMessage).toBe(true);
   if (!isRecord(body)) {
