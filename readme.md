@@ -11,9 +11,7 @@ npm ci
 cp .env.example .env
 ```
 
-Set `CANDIDATE_KEY` in `.env`. Do not commit `.env`. In GitHub Actions the same value belongs in the `CANDIDATE_KEY` secret.
-
-Persona tokens default to the published sandbox fixtures. Override them with `SARAH_TOKEN`, `BRIAN_TOKEN`, `JOSEPH_TOKEN`, `GRACE_TOKEN`, or `DAVID_TOKEN` if needed. `BASE_URL` defaults to the staging sandbox.
+Set `CANDIDATE_KEY` in `.env`. Do not commit `.env`. In GitHub Actions the same value belongs in the `CANDIDATE_KEY` secret. `.env.example` already has `BASE_URL` and the published persona tokens. CI copies that file before the tests run, and the secret overrides the empty key.
 
 ## Commands
 

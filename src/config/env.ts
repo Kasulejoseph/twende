@@ -1,136 +1,102 @@
-import fs from 'fs';
-import path from 'path';
-
-import type { Actor, Actors } from '../types/actors';
-
-export const DEFAULT_BASE_URL = 'https://staging-twende-backend.safeboda.com/api/qa-sandbox';
-
-const DEFAULT_TOKENS = {
-  SARAH_TOKEN: 'rdr_tok_nakato_5f2a91',
-  BRIAN_TOKEN: 'rdr_tok_okello_8c71d4',
-  JOSEPH_TOKEN: 'drv_tok_ssemanda_3e09b7',
-  GRACE_TOKEN: 'drv_tok_achieng_7a44c2',
-  DAVID_TOKEN: 'drv_tok_mugisha_1b6f80',
-} as const;
+import type { Actor, ActorKey, ActorRole, Actors } from '../types/actors';
+import type { ServiceType } from '../types/api';
 
 export interface AppConfig {
-  readonly baseUrl: string;
   readonly candidateKey: string;
   readonly actors: Actors;
 }
 
-let cached: AppConfig | undefined;
-
-export function loadEnvFile(filePath = path.resolve(process.cwd(), '.env')): void {
-  if (!fs.existsSync(filePath)) {
-    return;
-  }
-
-  const text = fs.readFileSync(filePath, 'utf8');
-  for (const line of text.split('\n')) {
-    const trimmed = line.trim();
-    if (trimmed.length === 0 || trimmed.startsWith('#')) {
-      continue;
-    }
-
-    const separator = trimmed.indexOf('=');
-    if (separator === -1) {
-      continue;
-    }
-
-    const key = trimmed.slice(0, separator).trim();
-    let value = trimmed.slice(separator + 1).trim();
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
-    }
-
-    if (process.env[key] === undefined) {
-      process.env[key] = value;
-    }
-  }
+interface Persona {
+  readonly key: ActorKey;
+  readonly role: ActorRole;
+  readonly name: string;
+  readonly tokenEnv: string;
+  readonly phone: string | null;
+  readonly openingBalance: number | null;
+  readonly services: readonly ServiceType[];
+  readonly plate: string | null;
 }
+
+const PERSONAS: readonly Persona[] = [
+  {
+    key: 'sarah',
+    role: 'rider',
+    name: 'Sarah Nakato',
+    tokenEnv: 'SARAH_TOKEN',
+    phone: '+256700100231',
+    openingBalance: 25_000,
+    services: [],
+    plate: null,
+  },
+  {
+    key: 'brian',
+    role: 'rider',
+    name: 'Brian Okello',
+    tokenEnv: 'BRIAN_TOKEN',
+    phone: '+256700100487',
+    openingBalance: 3_000,
+    services: [],
+    plate: null,
+  },
+  {
+    key: 'joseph',
+    role: 'driver',
+    name: 'Joseph Ssemanda',
+    tokenEnv: 'JOSEPH_TOKEN',
+    phone: null,
+    openingBalance: null,
+    services: ['boda', 'send'],
+    plate: 'UFA 412K',
+  },
+  {
+    key: 'grace',
+    role: 'driver',
+    name: 'Grace Achieng',
+    tokenEnv: 'GRACE_TOKEN',
+    phone: null,
+    openingBalance: null,
+    services: ['boda', 'send'],
+    plate: null,
+  },
+  {
+    key: 'david',
+    role: 'driver',
+    name: 'David Mugisha',
+    tokenEnv: 'DAVID_TOKEN',
+    phone: null,
+    openingBalance: null,
+    services: ['car'],
+    plate: null,
+  },
+];
+
+let cached: AppConfig | undefined;
 
 export function getConfig(): AppConfig {
   if (cached) {
     return cached;
   }
 
-  loadEnvFile();
   cached = readConfig();
   return cached;
 }
 
 export function secretValues(config: AppConfig = getConfig()): readonly string[] {
-  return [
-    config.candidateKey,
-    config.actors.sarah.token,
-    config.actors.brian.token,
-    config.actors.joseph.token,
-    config.actors.grace.token,
-    config.actors.david.token,
-  ];
+  const { sarah, brian, joseph, grace, david } = config.actors;
+  return [config.candidateKey, sarah.token, brian.token, joseph.token, grace.token, david.token];
 }
 
 function readConfig(): AppConfig {
-  const baseUrl = (process.env.BASE_URL ?? DEFAULT_BASE_URL).replace(/\/$/, '');
-  const candidateKey = requireEnv('CANDIDATE_KEY');
-  const sarah: Actor = {
-    key: 'sarah',
-    role: 'rider',
-    name: 'Sarah Nakato',
-    token: envOrDefault('SARAH_TOKEN', DEFAULT_TOKENS.SARAH_TOKEN),
-    phone: '+256700100231',
-    openingBalance: 25_000,
-    services: [],
-    plate: null,
-  };
-  const brian: Actor = {
-    key: 'brian',
-    role: 'rider',
-    name: 'Brian Okello',
-    token: envOrDefault('BRIAN_TOKEN', DEFAULT_TOKENS.BRIAN_TOKEN),
-    phone: '+256700100487',
-    openingBalance: 3_000,
-    services: [],
-    plate: null,
-  };
-  const joseph: Actor = {
-    key: 'joseph',
-    role: 'driver',
-    name: 'Joseph Ssemanda',
-    token: envOrDefault('JOSEPH_TOKEN', DEFAULT_TOKENS.JOSEPH_TOKEN),
-    phone: null,
-    openingBalance: null,
-    services: ['boda', 'send'],
-    plate: 'UFA 412K',
-  };
-  const grace: Actor = {
-    key: 'grace',
-    role: 'driver',
-    name: 'Grace Achieng',
-    token: envOrDefault('GRACE_TOKEN', DEFAULT_TOKENS.GRACE_TOKEN),
-    phone: null,
-    openingBalance: null,
-    services: ['boda', 'send'],
-    plate: null,
-  };
-  const david: Actor = {
-    key: 'david',
-    role: 'driver',
-    name: 'David Mugisha',
-    token: envOrDefault('DAVID_TOKEN', DEFAULT_TOKENS.DAVID_TOKEN),
-    phone: null,
-    openingBalance: null,
-    services: ['car'],
-    plate: null,
-  };
+  requireEnv('BASE_URL');
+  const actors = PERSONAS.map(toActor);
+  const sarah = actorByKey(actors, 'sarah');
+  const brian = actorByKey(actors, 'brian');
+  const joseph = actorByKey(actors, 'joseph');
+  const grace = actorByKey(actors, 'grace');
+  const david = actorByKey(actors, 'david');
 
   return {
-    baseUrl,
-    candidateKey,
+    candidateKey: requireEnv('CANDIDATE_KEY'),
     actors: {
       sarah,
       brian,
@@ -143,15 +109,31 @@ function readConfig(): AppConfig {
   };
 }
 
+function toActor(persona: Persona): Actor {
+  return {
+    key: persona.key,
+    role: persona.role,
+    name: persona.name,
+    token: requireEnv(persona.tokenEnv),
+    phone: persona.phone,
+    openingBalance: persona.openingBalance,
+    services: persona.services,
+    plate: persona.plate,
+  };
+}
+
+function actorByKey(actors: readonly Actor[], key: ActorKey): Actor {
+  const actor = actors.find((candidate) => candidate.key === key);
+  if (actor === undefined) {
+    throw new Error(`Missing persona ${key}.`);
+  }
+  return actor;
+}
+
 function requireEnv(name: string): string {
   const value = process.env[name]?.trim() ?? '';
   if (value.length === 0) {
     throw new Error(`${name} is required. Copy .env.example to .env and set ${name}. Do not commit .env.`);
   }
   return value;
-}
-
-function envOrDefault(name: string, fallback: string): string {
-  const value = process.env[name]?.trim() ?? '';
-  return value.length > 0 ? value : fallback;
 }
