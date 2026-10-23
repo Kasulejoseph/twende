@@ -4,13 +4,11 @@ import { ApiClient } from '../../src/client/api-client';
 import { getConfig } from '../../src/config/env';
 import { createControllers, type Controllers } from '../../src/controllers';
 import type { Actors } from '../../src/types/actors';
-import { TripLifecycle } from '../../src/workflows/trip-lifecycle';
 
 interface FrameworkFixtures {
   api: ApiClient;
   actors: Actors;
   controllers: Controllers;
-  lifecycle: TripLifecycle;
 }
 
 export const test = base.extend<FrameworkFixtures>({
@@ -22,9 +20,6 @@ export const test = base.extend<FrameworkFixtures>({
   },
   controllers: async ({ api }, use) => {
     await use(createControllers(api));
-  },
-  lifecycle: async ({ controllers }, use) => {
-    await use(new TripLifecycle(controllers));
   },
 });
 

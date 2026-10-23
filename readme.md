@@ -35,8 +35,7 @@ The config default is one worker. A bare `npx playwright test` therefore cannot 
 
 - `src/client` sets auth headers, redacts credentials in failure text, and fails the test on HTTP 500. Expected 4xx responses are returned to the spec. Playwright owns the base URL, the JSON body, and the failure trace.
 - `src/controllers` maps one endpoint group each and does not assert.
-- `src/workflows/trip-lifecycle.ts` is `reset`, `newEstimate`, `book`, and `drive`. Setup reads the id, status, and fare amount it needs to continue.
-- `tests/support/fixtures.ts` injects `api`, `actors`, `controllers`, and `lifecycle`.
+- `tests/support/fixtures.ts` injects `api`, `actors`, and `controllers`.
 - `tests/data` holds the shared input tables.
 - Specs assert with Playwright `expect` and pass `result.diagnostic` as the message.
 
