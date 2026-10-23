@@ -3,7 +3,18 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "npm run test:stateless && npm run test:stateful && npm run test:llm",
+    "test:all": "npm test && npm run test:slow",
+    "test:stateless": "playwright test --project=stateless --workers=4",
+    "test:stateful": "playwright test --project=stateful --workers=1",
+    "test:llm": "playwright test --project=llm --workers=1",
+    "test:slow": "playwright test --project=slow --workers=1",
+    "test:smoke": "playwright test --grep @smoke --workers=1",
+    "test:list": "playwright test --list",
+    "report": "playwright show-report",
+    "typecheck": "tsc --noEmit"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Kasulejoseph/twende.git"
@@ -18,6 +29,7 @@
   "homepage": "https://github.com/Kasulejoseph/twende#readme",
   "devDependencies": {
     "@playwright/test": "^1.64.1",
-    "@types/node": "^26.6.5"
+    "@types/node": "^26.6.5",
+    "typescript": "^5.9.3"
   }
 }

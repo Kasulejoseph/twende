@@ -1,6 +1,10 @@
 
 # Playwright
 node_modules/
+.env
+.env.*
+!.env.example
+.cursor/
 /test-results/
 /playwright-report/
 /blob-report/
