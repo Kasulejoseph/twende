@@ -1,8 +1,12 @@
 # Defects
 
-Observed on 23 October 2026 against `https://staging-twende-backend.safeboda.com/api/qa-sandbox`. Rider is Sarah Nakato (`+256700100231`), opening balance 25000 UGX after `POST /v1/_reset`. Both defects are the same balance error: an idempotent MTN top-up of 10000 is stored twice. The top-up response and the single ledger row still describe one credit.
+Observed on 23 October 2026 against `https://staging-twende-backend.safeboda.com/api/qa-sandbox`. Rider is Sarah Nakato (`+256700100231`).
+
+DEF-001 and DEF-002 are the same balance error. After `POST /v1/_reset` her opening balance is 25000 UGX. An idempotent MTN top-up of 10000 is stored twice. The top-up response and the single ledger row still describe one credit.
 
 TC-TOP-08 is not this defect. The same idempotency key with a different amount returns 422 `IDEMPOTENCY_KEY_REUSED` and the wallet increases by 10000 only.
+
+DEF-003 is separate. The second page of `GET /v1/trips` is empty while `total` says those trips exist.
 
 ## DEF-001 Replay of the same top-up credits the wallet twice
 
@@ -64,3 +68,40 @@ Found by TC-TOP-07.
 4. `GET /v1/me`.
 
 Found by TC-TOP-09.
+
+## DEF-003 Trip list page 2 is empty while total counts the trips
+
+**Title:** `GET /v1/trips?page=2&page_size=1` returns no rows when two trips exist
+
+**Description:** After a reset, Sarah has two booked trips. `GET /v1/trips?page=1&page_size=1` returns one row and `total` 2. The next page, `page=2&page_size=1`, returns 200 with `data: []` and the same `total` 2. The second trip is counted and cannot be read.
+
+**Severity:** Major. Any list longer than `page_size` drops every trip after the first page.
+
+**Expected results:**
+
+- `page=1&page_size=1` returns 200, `data.length` 1, `page` 1, `page_size` 1, and `total` at least 2.
+- `page=2&page_size=1` returns 200 and one row.
+- That row's id is different from the id on page 1.
+
+**Actual results:**
+
+- Page 1 returned 200 with one row, `page` 1, `page_size` 1, and `total` 2.
+- Page 2 returned 200:
+
+```json
+{
+  "data": [],
+  "page": 2,
+  "page_size": 1,
+  "total": 2
+}
+```
+
+**Steps to reproduce:**
+
+1. `POST /v1/_reset` with a valid `X-Candidate-Key`.
+2. Book two cash trips for Sarah. For each one, `POST /v1/fare-estimates` for a boda from Acacia Mall (`0.33495, 32.59352`) to Ntinda (`0.35402, 32.61498`), then `POST /v1/trips` with a new `Idempotency-Key` and `{ "estimate_id": "<that estimate>", "payment_method": "cash" }`.
+3. `GET /v1/trips?page=1&page_size=1` with Sarah's bearer token.
+4. `GET /v1/trips?page=2&page_size=1` with the same token.
+
+Found by TC-LST-04.
