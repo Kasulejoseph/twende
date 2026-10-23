@@ -18,6 +18,8 @@ export const lane = {
   bug: '@bug',
   transaction: '@transaction',
   e2e: '@e2e',
+  trips: '@trips',
+  fareEstimate: '@fare-estimate',
 } as const;
 
 export type Lane = (typeof lane)[keyof typeof lane];
