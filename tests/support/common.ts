@@ -1,6 +1,9 @@
 import { expect } from '@playwright/test';
 
+import type { Controllers } from '../../src/controllers';
 import { isRecord } from '../../src/helpers/guards';
+import type { Actors } from '../../src/types/actors';
+import type { TopUpRequest } from '../../src/types/api';
 
 export const nonEmptyString = (value: unknown): boolean =>
   typeof value === 'string' && value.length > 0;
@@ -24,6 +27,39 @@ export const dataList = (body: unknown, failureMessage: string): readonly Record
 
 export const errorCode = (body: unknown): unknown =>
   isRecord(body) && isRecord(body.error) ? body.error.code : undefined;
+
+export interface SarahWallet {
+  readonly token: string;
+  readonly phone: string;
+  readonly openingBalance: number;
+}
+
+export const sarahWallet = (actors: Actors): SarahWallet => {
+  const { sarah } = actors;
+  if (sarah.phone === null || sarah.openingBalance === null) {
+    throw new Error('Sarah phone and opening balance are required.');
+  }
+
+  return {
+    token: sarah.token,
+    phone: sarah.phone,
+    openingBalance: sarah.openingBalance,
+  };
+};
+
+export const mtnBody = (phone: string, amount: number): TopUpRequest => ({
+  amount,
+  provider: 'mtn_momo',
+  phone,
+});
+
+export const balanceOf = async (controllers: Controllers, token: string): Promise<number> => {
+  const result = await controllers.rider.me({ token });
+  expect(result.status, result.failureMessage).toBe(200);
+  const balance = walletBalance(result.body, result.failureMessage);
+  expect(typeof balance, result.failureMessage).toBe('number');
+  return typeof balance === 'number' ? balance : 0;
+};
 
 export const walletBalance = (body: unknown, failureMessage: string): unknown => {
   expect(isRecord(body), failureMessage).toBe(true);

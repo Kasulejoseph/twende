@@ -16,6 +16,8 @@ export const lane = {
   idempotency: '@idempotency',
   concurrency: '@concurrency',
   bug: '@bug',
+  transaction: '@transaction',
+  e2e: '@e2e',
 } as const;
 
 export type Lane = (typeof lane)[keyof typeof lane];

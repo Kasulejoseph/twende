@@ -2,11 +2,9 @@ import { randomUUID } from 'node:crypto';
 
 import type { Controllers } from '../src/controllers';
 import { isRecord } from '../src/helpers/guards';
-import type { Actors } from '../src/types/actors';
-import type { TopUpRequest } from '../src/types/api';
 import { invalidPhones } from './data/phones';
 import { topUpAmountCases } from './data/top-up-amounts';
-import { assertErrorBody, dataList, errorCode, nonEmptyString, walletBalance } from './support/common';
+import { assertErrorBody, balanceOf, dataList, errorCode, mtnBody, nonEmptyString, sarahWallet } from './support/common';
 import { expect, lane, resetTest, test } from './support/fixtures';
 
 const topUpAmount = 10_000;
@@ -245,39 +243,6 @@ test('TC-TOP-10 invalid JSON body', {
   const after = await balanceOf(controllers, sarah.token);
   expect(after, result.failureMessage).toBe(before);
 });
-
-interface SarahWallet {
-  readonly token: string;
-  readonly phone: string;
-  readonly openingBalance: number;
-}
-
-const sarahWallet = (actors: Actors): SarahWallet => {
-  const { sarah } = actors;
-  if (sarah.phone === null || sarah.openingBalance === null) {
-    throw new Error('Sarah phone and opening balance are required.');
-  }
-
-  return {
-    token: sarah.token,
-    phone: sarah.phone,
-    openingBalance: sarah.openingBalance,
-  };
-};
-
-const mtnBody = (phone: string, amount: number): TopUpRequest => ({
-  amount,
-  provider: 'mtn_momo',
-  phone,
-});
-
-const balanceOf = async (controllers: Controllers, token: string): Promise<number> => {
-  const result = await controllers.rider.me({ token });
-  expect(result.status, result.failureMessage).toBe(200);
-  const balance = walletBalance(result.body, result.failureMessage);
-  expect(typeof balance, result.failureMessage).toBe('number');
-  return typeof balance === 'number' ? balance : 0;
-};
 
 const topUpView = (body: unknown, failureMessage: string): Record<string, unknown> => {
   expect(isRecord(body), failureMessage).toBe(true);
