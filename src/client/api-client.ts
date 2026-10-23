@@ -21,7 +21,7 @@ export interface ApiResult {
   readonly url: string;
   readonly status: number;
   readonly body: unknown;
-  readonly diagnostic: string;
+  readonly failureMessage: string;
 }
 
 type QueryValue = string | number | boolean;
@@ -41,7 +41,8 @@ export class ApiClient {
       throw new Error(`API path must start with /. Received ${call.path}`);
     }
 
-    const response = await this.request.fetch(call.path, {
+    // Playwright resolves a leading slash from the origin and drops the base path.
+    const response = await this.request.fetch(call.path.slice(1), {
       method: call.method,
       headers: this.headersFor(call),
       params: definedQuery(call.query),
@@ -79,7 +80,7 @@ export class ApiClient {
   }
 }
 
-function definedQuery(query: ApiCall['query']): Record<string, QueryValue> | undefined {
+const definedQuery = (query: ApiCall['query']): Record<string, QueryValue> | undefined => {
   if (query === undefined) {
     return undefined;
   }
@@ -97,9 +98,9 @@ function definedQuery(query: ApiCall['query']): Record<string, QueryValue> | und
   }
 
   return Object.fromEntries(entries);
-}
+};
 
-async function readBody(response: APIResponse): Promise<unknown> {
+const readBody = async (response: APIResponse): Promise<unknown> => {
   const text = await response.text();
   if (text.length === 0) {
     return null;
@@ -110,9 +111,9 @@ async function readBody(response: APIResponse): Promise<unknown> {
   } catch {
     return text;
   }
-}
+};
 
-function toResult(call: ApiCall, response: APIResponse, body: unknown, secrets: readonly string[]): ApiResult {
+const toResult = (call: ApiCall, response: APIResponse, body: unknown, secrets: readonly string[]): ApiResult => {
   const url = response.url();
   const status = response.status();
   return {
@@ -120,18 +121,18 @@ function toResult(call: ApiCall, response: APIResponse, body: unknown, secrets: 
     url,
     status,
     body,
-    diagnostic: `${call.method} ${url} -> ${status}\n${truncate(safeJson(body, secrets))}`,
+    failureMessage: `${call.method} ${url} -> ${status}\n${truncate(safeJson(body, secrets))}`,
   };
-}
+};
 
-function serverError(result: ApiResult, secrets: readonly string[]): ApiError {
+const serverError = (result: ApiResult, secrets: readonly string[]): ApiError => {
   const leaks = internalLeakViolations(result.body, secrets);
   const leakNote = leaks.length > 0 ? ` Leak checks failed: ${leaks.join('; ')}.` : '';
   return new ApiError({
-    message: `Server error ${result.status} from ${result.method} ${result.url}.${leakNote}\n${result.diagnostic}`,
+    message: `Server error ${result.status} from ${result.method} ${result.url}.${leakNote}\n${result.failureMessage}`,
     status: result.status,
     method: result.method,
     url: result.url,
     body: result.body,
   });
-}
+};

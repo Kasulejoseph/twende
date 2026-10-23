@@ -19,15 +19,13 @@ export interface Controllers {
   readonly sandbox: SandboxController;
 }
 
-export function createControllers(api: ApiClient): Controllers {
-  return {
-    places: new PlacesController(api),
-    rider: new RiderController(api),
-    wallet: new WalletController(api),
-    estimates: new EstimatesController(api),
-    trips: new TripsController(api),
-    driver: new DriverController(api),
-    support: new SupportController(api),
-    sandbox: new SandboxController(api),
-  };
-}
+export const createControllers = (api: ApiClient): Controllers => ({
+  places: new PlacesController(api),
+  rider: new RiderController(api),
+  wallet: new WalletController(api),
+  estimates: new EstimatesController(api),
+  trips: new TripsController(api),
+  driver: new DriverController(api),
+  support: new SupportController(api),
+  sandbox: new SandboxController(api),
+});

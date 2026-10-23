@@ -4,6 +4,9 @@ export const lane = {
   llm: '@llm',
   slow: '@slow',
   smoke: '@smoke',
+  places: '@places',
+  negative: '@negative',
+  security: '@security',
 } as const;
 
 export type Lane = (typeof lane)[keyof typeof lane];

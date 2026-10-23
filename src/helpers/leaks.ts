@@ -11,29 +11,7 @@ const LEAK_RULES: readonly LeakRule[] = [
   { name: 'path', pattern: /(?:\/Users\/|\/home\/|\/var\/|\\Users\\|node_modules|[A-Za-z]:\\)/ },
 ];
 
-export function internalLeakViolations(value: unknown, secrets: readonly string[] = []): readonly string[] {
-  const texts: string[] = [];
-  collectStrings(value, texts);
-  const violations: string[] = [];
-
-  for (const text of texts) {
-    for (const rule of LEAK_RULES) {
-      if (rule.pattern.test(text)) {
-        violations.push(`${rule.name} pattern matched`);
-      }
-    }
-
-    for (const secret of secrets) {
-      if (secret.length > 0 && text.includes(secret)) {
-        violations.push('response contains a credential');
-      }
-    }
-  }
-
-  return violations;
-}
-
-function collectStrings(value: unknown, found: string[]): void {
+const collectStrings = (value: unknown, found: string[]): void => {
   if (typeof value === 'string') {
     found.push(value);
     return;
@@ -53,4 +31,26 @@ function collectStrings(value: unknown, found: string[]): void {
   for (const item of Object.values(value)) {
     collectStrings(item, found);
   }
-}
+};
+
+export const internalLeakViolations = (value: unknown, secrets: readonly string[] = []): readonly string[] => {
+  const texts: string[] = [];
+  collectStrings(value, texts);
+  const violations: string[] = [];
+
+  for (const text of texts) {
+    for (const rule of LEAK_RULES) {
+      if (rule.pattern.test(text)) {
+        violations.push(`${rule.name} pattern matched`);
+      }
+    }
+
+    for (const secret of secrets) {
+      if (secret.length > 0 && text.includes(secret)) {
+        violations.push('response contains a credential');
+      }
+    }
+  }
+
+  return violations;
+};

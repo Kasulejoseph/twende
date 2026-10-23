@@ -35,7 +35,7 @@ The config default is one worker. A bare `npx playwright test` therefore cannot 
 - `src/controllers` maps one endpoint group each and does not assert.
 - `tests/support/fixtures.ts` injects `api`, `actors`, and `controllers`.
 - `tests/data` holds the shared input tables.
-- Specs assert with Playwright `expect` and pass `result.diagnostic` as the message.
+- Specs assert with Playwright `expect` and pass `result.failureMessage` as the message.
 
 Tag each spec with exactly one lane from `lane`: `@stateless`, `@stateful`, `@llm`, or `@slow`. `@smoke` may be added beside a lane. Stateless tests must not reset the sandbox or read wallet or trip state.
 

@@ -2,9 +2,28 @@ import path from 'path';
 
 import { defineConfig } from '@playwright/test';
 
+const loadLocalEnv = (): void => {
+  try {
+    process.loadEnvFile(path.resolve(__dirname, '.env'));
+  } catch (error: unknown) {
+    if (isMissingEnvFile(error)) {
+      return;
+    }
+    throw error;
+  }
+};
+
+const isMissingEnvFile = (error: unknown): boolean =>
+  error instanceof Error && 'code' in error && error.code === 'ENOENT';
+
+const withTrailingSlash = (value: string | undefined): string | undefined => {
+  const trimmed = value?.trim().replace(/\/$/, '') ?? '';
+  return trimmed.length === 0 ? undefined : `${trimmed}/`;
+};
+
 loadLocalEnv();
 
-const baseURL = process.env.BASE_URL?.trim().replace(/\/$/, '');
+const baseURL = withTrailingSlash(process.env.BASE_URL);
 const blobName = process.env.PLAYWRIGHT_BLOB_NAME ?? 'local';
 
 export default defineConfig({
@@ -48,18 +67,3 @@ export default defineConfig({
     },
   ],
 });
-
-function loadLocalEnv(): void {
-  try {
-    process.loadEnvFile(path.resolve(__dirname, '.env'));
-  } catch (error: unknown) {
-    if (isMissingEnvFile(error)) {
-      return;
-    }
-    throw error;
-  }
-}
-
-function isMissingEnvFile(error: unknown): boolean {
-  return error instanceof Error && 'code' in error && error.code === 'ENOENT';
-}

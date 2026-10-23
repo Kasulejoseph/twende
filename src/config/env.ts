@@ -72,21 +72,34 @@ const PERSONAS: readonly Persona[] = [
 
 let cached: AppConfig | undefined;
 
-export function getConfig(): AppConfig {
-  if (cached) {
-    return cached;
+const requireEnv = (name: string): string => {
+  const value = process.env[name]?.trim() ?? '';
+  if (value.length === 0) {
+    throw new Error(`${name} is required. Copy .env.example to .env and set ${name}. Do not commit .env.`);
   }
+  return value;
+};
 
-  cached = readConfig();
-  return cached;
-}
+const toActor = (persona: Persona): Actor => ({
+  key: persona.key,
+  role: persona.role,
+  name: persona.name,
+  token: requireEnv(persona.tokenEnv),
+  phone: persona.phone,
+  openingBalance: persona.openingBalance,
+  services: persona.services,
+  plate: persona.plate,
+});
 
-export function secretValues(config: AppConfig = getConfig()): readonly string[] {
-  const { sarah, brian, joseph, grace, david } = config.actors;
-  return [config.candidateKey, sarah.token, brian.token, joseph.token, grace.token, david.token];
-}
+const actorByKey = (actors: readonly Actor[], key: ActorKey): Actor => {
+  const actor = actors.find((candidate) => candidate.key === key);
+  if (actor === undefined) {
+    throw new Error(`Missing persona ${key}.`);
+  }
+  return actor;
+};
 
-function readConfig(): AppConfig {
+const readConfig = (): AppConfig => {
   requireEnv('BASE_URL');
   const actors = PERSONAS.map(toActor);
   const sarah = actorByKey(actors, 'sarah');
@@ -107,33 +120,18 @@ function readConfig(): AppConfig {
       drivers: [joseph, grace, david],
     },
   };
-}
+};
 
-function toActor(persona: Persona): Actor {
-  return {
-    key: persona.key,
-    role: persona.role,
-    name: persona.name,
-    token: requireEnv(persona.tokenEnv),
-    phone: persona.phone,
-    openingBalance: persona.openingBalance,
-    services: persona.services,
-    plate: persona.plate,
-  };
-}
-
-function actorByKey(actors: readonly Actor[], key: ActorKey): Actor {
-  const actor = actors.find((candidate) => candidate.key === key);
-  if (actor === undefined) {
-    throw new Error(`Missing persona ${key}.`);
+export const getConfig = (): AppConfig => {
+  if (cached) {
+    return cached;
   }
-  return actor;
-}
 
-function requireEnv(name: string): string {
-  const value = process.env[name]?.trim() ?? '';
-  if (value.length === 0) {
-    throw new Error(`${name} is required. Copy .env.example to .env and set ${name}. Do not commit .env.`);
-  }
-  return value;
-}
+  cached = readConfig();
+  return cached;
+};
+
+export const secretValues = (config: AppConfig = getConfig()): readonly string[] => {
+  const { sarah, brian, joseph, grace, david } = config.actors;
+  return [config.candidateKey, sarah.token, brian.token, joseph.token, grace.token, david.token];
+};
