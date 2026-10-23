@@ -7,6 +7,9 @@ export const lane = {
   places: '@places',
   negative: '@negative',
   security: '@security',
+  billing: '@billing',
+  rider: '@rider',
+  driver: '@driver',
 } as const;
 
 export type Lane = (typeof lane)[keyof typeof lane];

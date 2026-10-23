@@ -1,0 +1,86 @@
+import type { AuthOverride } from '../src/controllers/auth';
+import { isRecord } from '../src/helpers/guards';
+import { assertErrorBody } from './support/common';
+import { expect, lane, test } from './support/fixtures';
+
+const unauthorisedRows = (token: string): readonly { readonly name: string; readonly auth: AuthOverride }[] => [
+  { name: 'missing key', auth: { token, sendCandidateKey: false } },
+  { name: 'invalid token', auth: { token: 'invalid' } },
+  { name: 'missing authorization', auth: { sendAuthorization: false } },
+];
+
+test('TC-ME-01 valid rider profile and starting wallet', {
+  tag: [lane.stateful, lane.smoke, lane.billing, lane.rider],
+}, async ({ actors, controllers }) => {
+  const reset = await controllers.sandbox.reset();
+  expect(reset.status, reset.failureMessage).toBe(200);
+
+  const result = await controllers.rider.me({ token: actors.sarah.token });
+  expect(result.status, result.failureMessage).toBe(200);
+
+  const rider = riderView(result.body, result.failureMessage);
+  expect(rider.name, result.failureMessage).toBe(actors.sarah.name);
+  expect(rider.phone, result.failureMessage).toBe(actors.sarah.phone);
+  expect(rider.balance, result.failureMessage).toBe(actors.sarah.openingBalance);
+  expect(rider.currency, result.failureMessage).toBe('UGX');
+});
+
+test('TC-ME-02 Brian starting wallet', {
+  tag: [lane.stateful, lane.billing, lane.rider],
+}, async ({ actors, controllers }) => {
+  const reset = await controllers.sandbox.reset();
+  expect(reset.status, reset.failureMessage).toBe(200);
+
+  const result = await controllers.rider.me({ token: actors.brian.token });
+  expect(result.status, result.failureMessage).toBe(200);
+
+  const rider = riderView(result.body, result.failureMessage);
+  expect(rider.name, result.failureMessage).toBe(actors.brian.name);
+  expect(rider.phone, result.failureMessage).toBe(actors.brian.phone);
+  expect(rider.balance, result.failureMessage).toBe(actors.brian.openingBalance);
+});
+
+test('TC-ME-03 missing key or rider token', {
+  tag: [lane.stateless, lane.negative, lane.security, lane.billing, lane.rider],
+}, async ({ actors, controllers }) => {
+  for (const row of unauthorisedRows(actors.sarah.token)) {
+    await test.step(row.name, async () => {
+      const result = await controllers.rider.me(row.auth);
+      expect(result.status, result.failureMessage).toBe(401);
+      assertErrorBody(result.body, result.failureMessage);
+    });
+  }
+});
+
+test('TC-ME-04 driver token on rider endpoint', {
+  tag: [lane.stateless, lane.negative, lane.security, lane.billing, lane.driver],
+}, async ({ actors, controllers }) => {
+  const result = await controllers.rider.me({ token: actors.joseph.token });
+  expect(result.status, result.failureMessage).toBe(403);
+  assertErrorBody(result.body, result.failureMessage);
+  expect(errorCode(result.body), result.failureMessage).toBe('FORBIDDEN');
+});
+
+interface RiderView {
+  readonly name: unknown;
+  readonly phone: unknown;
+  readonly balance: unknown;
+  readonly currency: unknown;
+}
+
+const riderView = (body: unknown, failureMessage: string): RiderView => {
+  expect(isRecord(body), failureMessage).toBe(true);
+  const profile = isRecord(body) ? body : {};
+  expect(isRecord(profile.wallet), failureMessage).toBe(true);
+  const wallet = isRecord(profile.wallet) ? profile.wallet : {};
+
+  return {
+    name: profile.name,
+    phone: profile.phone,
+    balance: wallet.balance,
+    currency: wallet.currency,
+  };
+};
+
+const errorCode = (body: unknown): unknown =>
+  isRecord(body) && isRecord(body.error) ? body.error.code : undefined;
