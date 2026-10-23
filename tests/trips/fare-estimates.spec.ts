@@ -1,10 +1,11 @@
-import type { AuthOverride } from '../src/controllers/auth';
-import { isRecord } from '../src/helpers/guards';
-import type { ApiResult } from '../src/client/api-client';
-import type { FareEstimateRequest, ServiceType } from '../src/types/api';
-import { inapplicablePromos, invalidPromoCode } from './data/promos';
-import { assertErrorBody, errorCode, nonEmptyString } from './support/common';
-import { expect, lane, test } from './support/fixtures';
+import type { AuthOverride } from '../../src/controllers/auth';
+import { isRecord } from '../../src/helpers/guards';
+import type { ApiResult } from '../../src/client/api-client';
+import type { FareEstimateRequest, ServiceType } from '../../src/types/api';
+import { inapplicablePromos, invalidPromoCode } from '../data/promos';
+import { assertErrorBody, errorCode, nonEmptyString } from '../support/common';
+import { expect, lane, test } from '../support/fixtures';
+import { estimateView, fareAmount } from './estimate';
 
 const acacia = { lat: 0.33495, lng: 32.59352 } as const;
 const ntinda = { lat: 0.35402, lng: 32.61498 } as const;
@@ -173,51 +174,6 @@ const dropoff = (body: unknown, failureMessage: string): Record<string, unknown>
   const record = isRecord(body) ? body : {};
   expect(isRecord(record.dropoff), failureMessage).toBe(true);
   return isRecord(record.dropoff) ? record.dropoff : {};
-};
-
-const fareAmount = (body: unknown, failureMessage: string): number => {
-  expect(isRecord(body), failureMessage).toBe(true);
-  const record = isRecord(body) ? body : {};
-  expect(isRecord(record.fare), failureMessage).toBe(true);
-  const fare = isRecord(record.fare) ? record.fare : {};
-  expect(typeof fare.amount, failureMessage).toBe('number');
-  return typeof fare.amount === 'number' ? fare.amount : 0;
-};
-
-interface EstimateView {
-  readonly id: unknown;
-  readonly distanceKm: number;
-  readonly etaMinutes: number;
-  readonly fareAmount: number;
-  readonly currency: unknown;
-  readonly createdAt: number;
-  readonly expiresAt: number;
-}
-
-const estimateView = (body: unknown, failureMessage: string): EstimateView => {
-  expect(isRecord(body), failureMessage).toBe(true);
-  const record = isRecord(body) ? body : {};
-  expect(isRecord(record.fare), failureMessage).toBe(true);
-  const fare = isRecord(record.fare) ? record.fare : {};
-  expect(typeof record.distance_km, failureMessage).toBe('number');
-  expect(typeof record.eta_minutes, failureMessage).toBe('number');
-  expect(typeof fare.amount, failureMessage).toBe('number');
-  expect(nonEmptyString(record.created_at), failureMessage).toBe(true);
-  expect(nonEmptyString(record.expires_at), failureMessage).toBe(true);
-  const createdAt = Date.parse(typeof record.created_at === 'string' ? record.created_at : '');
-  const expiresAt = Date.parse(typeof record.expires_at === 'string' ? record.expires_at : '');
-  expect(Number.isNaN(createdAt), failureMessage).toBe(false);
-  expect(Number.isNaN(expiresAt), failureMessage).toBe(false);
-
-  return {
-    id: record.id,
-    distanceKm: typeof record.distance_km === 'number' ? record.distance_km : 0,
-    etaMinutes: typeof record.eta_minutes === 'number' ? record.eta_minutes : 0,
-    fareAmount: typeof fare.amount === 'number' ? fare.amount : 0,
-    currency: fare.currency,
-    createdAt,
-    expiresAt,
-  };
 };
 
 const expectEstimateError = (result: ApiResult, status: number, code: string): void => {
