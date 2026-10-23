@@ -19,6 +19,29 @@ export const tripRecord = (body: unknown, failureMessage: string): Record<string
   return isRecord(body) ? body : {};
 };
 
+const driverActions = ['accept', 'arrive', 'start', 'complete'] as const;
+export type DriverAction = (typeof driverActions)[number];
+
+export const advance = async (
+  controllers: Controllers,
+  tripId: string,
+  driverToken: string,
+  through: DriverAction,
+): Promise<void> => {
+  const auth = { token: driverToken };
+  const calls = [
+    () => controllers.driver.accept(tripId, auth),
+    () => controllers.driver.arrive(tripId, auth),
+    () => controllers.driver.start(tripId, auth),
+    () => controllers.driver.complete(tripId, auth),
+  ];
+  const last = driverActions.indexOf(through);
+  for (const call of calls.slice(0, last + 1)) {
+    const result = await call();
+    expect(result.status, result.failureMessage).toBe(200);
+  }
+};
+
 export const bookCash = async (controllers: Controllers, token: string): Promise<ApiResult> => {
   const estimate = await freshBodaEstimate(controllers, token);
   const result = await controllers.trips.create({

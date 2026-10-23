@@ -5,12 +5,8 @@ import type { Controllers } from '../../src/controllers';
 import { assertErrorBody, balanceOf, dataList, recordId, sarahWallet } from '../support/common';
 import { expect, lane, resetTest, test } from '../support/fixtures';
 import { freshBodaEstimate } from './estimate';
-import { bookCash, expectTripError, tripRecord } from './trip';
+import { advance, bookCash, expectTripError, tripRecord, type DriverAction } from './trip';
 
-const driverActions = ['accept', 'arrive', 'start', 'complete'] as const;
-type DriverAction = (typeof driverActions)[number];
-
-const reasonTooLong = 'a'.repeat(201);
 
 test('TC-CAN-01 cancel a requested trip with a reason', {
   tag: [lane.stateful, lane.smoke, lane.trips, lane.rider, lane.cancel],
@@ -142,23 +138,3 @@ const cancel = (
   token: string,
   body: { readonly reason?: string } = {},
 ): Promise<ApiResult> => controllers.trips.cancel(tripId, { auth: { token }, body });
-
-const advance = async (
-  controllers: Controllers,
-  tripId: string,
-  driverToken: string,
-  through: DriverAction,
-): Promise<void> => {
-  const auth = { token: driverToken };
-  const calls = [
-    () => controllers.driver.accept(tripId, auth),
-    () => controllers.driver.arrive(tripId, auth),
-    () => controllers.driver.start(tripId, auth),
-    () => controllers.driver.complete(tripId, auth),
-  ];
-  const last = driverActions.indexOf(through);
-  for (const call of calls.slice(0, last + 1)) {
-    const result = await call();
-    expect(result.status, result.failureMessage).toBe(200);
-  }
-};

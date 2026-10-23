@@ -12,6 +12,8 @@ DEF-004 is separate. Brian Okello (`+256700100487`) can read a trip that Sarah b
 
 DEF-005 is separate. Sarah can cancel a trip after Joseph Ssemanda has completed it.
 
+DEF-006 is separate. Sarah can rate a trip that is still `requested`.
+
 ## DEF-001 Replay of the same top-up credits the wallet twice
 
 **Title:** Same idempotency key and body returns the original top-up but credits the wallet again
@@ -165,3 +167,32 @@ Found by TC-GET-03.
 4. As Sarah, `POST /v1/trips/{trip_id}/cancel` with `{}`.
 
 Found by TC-CAN-05.
+
+## DEF-006 A requested trip can be rated
+
+**Title:** `POST /v1/trips/{trip_id}/rating` returns 201 while the trip is still requested
+
+**Description:** Sarah books a cash trip and does not wait for a driver. She rates that trip with `{ "stars": 5 }`. The sandbox returns 201 and stores the rating. The trip has not been completed.
+
+The same case also rates a trip that Joseph has started but not completed. That row did not run, because the requested row failed first.
+
+**Severity:** Major. A rider can rate a trip before it has been completed.
+
+**Expected results:**
+
+- Status is 409.
+- `error.code` is `TRIP_NOT_COMPLETED`.
+- The trip stays unrated.
+
+**Actual results:**
+
+- Rating a requested trip returned 201 for `trp_C6450C9A4C07`.
+- The body was `{ "trip_id": "trp_C6450C9A4C07", "stars": 5, "comment": null }`.
+
+**Steps to reproduce:**
+
+1. Book a cash trip for Sarah. `POST /v1/fare-estimates` for a boda from Acacia Mall (`0.33495, 32.59352`) to Ntinda (`0.35402, 32.61498`), then `POST /v1/trips` with a new `Idempotency-Key` and `{ "estimate_id": "<that estimate>", "payment_method": "cash" }`.
+2. Leave the trip in `requested`. Do not accept it.
+3. As Sarah, `POST /v1/trips/{trip_id}/rating` with `{ "stars": 5 }`.
+
+Found by TC-RAT-06.
