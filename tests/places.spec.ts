@@ -44,7 +44,7 @@ test('TC-PLC-02 filter by query ntinda', {
     expect(ntindaPattern.test(name) || ntindaPattern.test(area), result.failureMessage).toBe(true);
   }
   expect(places, result.failureMessage).toEqual(expect.arrayContaining([
-    expect.objectContaining({ area: /Ntinda/i }),
+    expect.objectContaining({ area: 'Ntinda' }),
   ]));
 });
 

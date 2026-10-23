@@ -44,6 +44,11 @@ export default defineConfig({
   },
   projects: [
     {
+      name: 'all',
+      fullyParallel: false,
+      timeout: 8 * 60 * 1000,
+    },
+    {
       name: 'stateless',
       grep: /@stateless/,
       fullyParallel: true,

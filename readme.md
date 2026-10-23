@@ -2,7 +2,7 @@
 
 Playwright API tests for the Twende QA sandbox. Controllers issue HTTP calls. Specs own the assertions. One candidate key owns the sandbox, so anything that calls `POST /v1/_reset` runs one test at a time.
 
-Scenario specs are not in this bootstrap yet, so `npm test` exits with "No tests found" until they are added.
+`npm test` runs every spec in the `all` project. Lane commands still select `@stateless`, `@stateful`, `@llm`, and `@slow`.
 
 ## Setup
 
@@ -17,8 +17,8 @@ Set `CANDIDATE_KEY` in `.env`. Do not commit `.env`. In GitHub Actions the same 
 
 | Command | What it runs |
 | --- | --- |
-| `npm test` | Stateless tests in parallel, then stateful and LLM tests with one worker |
-| `npm run test:all` | `npm test` plus the five-minute estimate expiry |
+| `npm test` | Every spec, one worker, no lane tag filter |
+| `npm run test:all` | Same as `npm test` |
 | `npm run test:stateless` | `@stateless` only |
 | `npm run test:stateful` | `@stateful` with `--workers=1` |
 | `npm run test:llm` | `@llm` with `--workers=1` |
@@ -27,7 +27,7 @@ Set `CANDIDATE_KEY` in `.env`. Do not commit `.env`. In GitHub Actions the same 
 | `npx playwright test -g TC-PLC-02` | One case. Add `--workers=1` if the case resets the sandbox |
 | `npm run report` | Open the local HTML report |
 
-The config default is one worker. A bare `npx playwright test` therefore cannot run two resetting tests at once. Stateless parallelism is opt-in through `npm run test:stateless` and the CI shard jobs.
+The config default is one worker. `npm test` uses the `all` project, so lane tags do not select or skip specs. A bare `npx playwright test` runs every project, including `all`, and repeats tagged specs. Stateless parallelism is opt-in through `npm run test:stateless` and the CI shard jobs.
 
 ## Layout
 
