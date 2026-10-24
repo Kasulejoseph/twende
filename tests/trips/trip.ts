@@ -19,6 +19,17 @@ export const tripRecord = (body: unknown, failureMessage: string): Record<string
   return isRecord(body) ? body : {};
 };
 
+export const assignedDriver = (trip: Record<string, unknown>, failureMessage: string): Record<string, unknown> => {
+  expect(isRecord(trip.driver), failureMessage).toBe(true);
+  return isRecord(trip.driver) ? trip.driver : {};
+};
+
+export const storedRating = (body: unknown, failureMessage: string): Record<string, unknown> => {
+  const rating = tripRecord(body, failureMessage).rating;
+  expect(isRecord(rating), failureMessage).toBe(true);
+  return isRecord(rating) ? rating : {};
+};
+
 const driverActions = ['accept', 'arrive', 'start', 'complete'] as const;
 export type DriverAction = (typeof driverActions)[number];
 

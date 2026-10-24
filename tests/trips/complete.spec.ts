@@ -1,8 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import type { Controllers } from '../../src/controllers';
-import { isRecord } from '../../src/helpers/guards';
-import { assertErrorBody, balanceOf, dataList, errorBody, recordId, sarahWallet } from '../support/common';
+import { assertErrorBody, balanceOf, errorBody, expectLedgerIdentity, recordId, sarahWallet, tripCharges } from '../support/common';
 import { expect, lane, resetTest, test } from '../support/fixtures';
 import { freshBodaEstimate } from './estimate';
 import { expectStatus, expectTripError, requestedTripId, tripRecord } from './trip';
@@ -42,8 +41,7 @@ resetTest('TC-CMP-02 completing a wallet trip charges the fare once and the ledg
   const ledger = await controllers.wallet.transactions({ token: sarah.token });
   expect(ledger.status, ledger.failureMessage).toBe(200);
   expectLedgerIdentity(ledger.body, ledger.failureMessage);
-  const charges = dataList(ledger.body, ledger.failureMessage).filter((row) =>
-    row.type === 'trip_charge' && row.reference === funded.tripId);
+  const charges = await tripCharges(controllers, sarah.token, funded.tripId);
   expect(charges, ledger.failureMessage).toHaveLength(1);
   expect(charges[0]?.amount, ledger.failureMessage).toBe(-funded.fare);
 });
@@ -166,29 +164,4 @@ const walletTrip = async (
   });
   expect(booked.status, booked.failureMessage).toBe(201);
   return { tripId: recordId(booked.body, booked.failureMessage), fare: estimate.fareAmount };
-};
-
-const tripCharges = async (
-  controllers: Controllers,
-  token: string,
-  tripId: string,
-): Promise<readonly Record<string, unknown>[]> => {
-  const ledger = await controllers.wallet.transactions({ token });
-  expect(ledger.status, ledger.failureMessage).toBe(200);
-  return dataList(ledger.body, ledger.failureMessage).filter((row) =>
-    row.type === 'trip_charge' && row.reference === tripId);
-};
-
-const expectLedgerIdentity = (body: unknown, failureMessage: string): void => {
-  expect(isRecord(body), failureMessage).toBe(true);
-  const record = isRecord(body) ? body : {};
-  expect(typeof record.opening_balance, failureMessage).toBe('number');
-  expect(typeof record.balance, failureMessage).toBe('number');
-  const signedSum = dataList(body, failureMessage).reduce((sum, row) => {
-    expect(typeof row.amount, failureMessage).toBe('number');
-    return sum + (typeof row.amount === 'number' ? row.amount : 0);
-  }, 0);
-  const opening = typeof record.opening_balance === 'number' ? record.opening_balance : 0;
-  const balance = typeof record.balance === 'number' ? record.balance : 0;
-  expect(opening + signedSum, failureMessage).toBe(balance);
 };

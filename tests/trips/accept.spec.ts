@@ -1,8 +1,7 @@
 import type { ApiResult } from '../../src/client/api-client';
-import { isRecord } from '../../src/helpers/guards';
 import { assertErrorBody, recordId } from '../support/common';
 import { expect, lane, resetTest, test } from '../support/fixtures';
-import { bookCash, expectTripError, requestedTripId, tripRecord } from './trip';
+import { assignedDriver, bookCash, expectTripError, requestedTripId, tripRecord } from './trip';
 
 resetTest('TC-ACC-01 a boda driver accepts a requested boda and the rider sees that driver assigned', {
   tag: [lane.stateful, lane.smoke, lane.trips, lane.driver],
@@ -170,8 +169,3 @@ test('TC-ACC-07 accepting an unknown trip returns not found, and a missing token
     assertErrorBody(result.body, result.failureMessage);
   });
 });
-
-const assignedDriver = (trip: Record<string, unknown>, failureMessage: string): Record<string, unknown> => {
-  expect(isRecord(trip.driver), failureMessage).toBe(true);
-  return isRecord(trip.driver) ? trip.driver : {};
-};

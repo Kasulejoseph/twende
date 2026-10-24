@@ -1,11 +1,10 @@
 import type { ApiResult } from '../../src/client/api-client';
 import type { Controllers } from '../../src/controllers';
-import { isRecord } from '../../src/helpers/guards';
 import type { RatingRequest } from '../../src/types/api';
 import { starBoundaryCases } from '../data/ratings';
 import { recordId } from '../support/common';
 import { expect, lane, resetTest, test } from '../support/fixtures';
-import { advance, bookCash, expectTripError, tripRecord } from './trip';
+import { advance, bookCash, expectTripError, storedRating, tripRecord } from './trip';
 
 resetTest('TC-RAT-01 a rider rates a completed trip and the comment is saved on the trip', {
   tag: [lane.stateful, lane.smoke, lane.trips, lane.rider, lane.rating],
@@ -141,9 +140,3 @@ const rate = (
   token: string,
   body: RatingRequest | { readonly comment?: string },
 ): Promise<ApiResult> => controllers.trips.rate(tripId, { auth: { token }, body });
-
-const storedRating = (body: unknown, failureMessage: string): Record<string, unknown> => {
-  const rating = tripRecord(body, failureMessage).rating;
-  expect(isRecord(rating), failureMessage).toBe(true);
-  return isRecord(rating) ? rating : {};
-};

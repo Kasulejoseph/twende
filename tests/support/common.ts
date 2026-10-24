@@ -94,6 +94,31 @@ export const assertErrorBody = (body: unknown, failureMessage: string): void => 
   expect(nonEmptyString(body.error.request_id), failureMessage).toBe(true);
 };
 
+export const tripCharges = async (
+  controllers: Controllers,
+  token: string,
+  tripId: string,
+): Promise<readonly Record<string, unknown>[]> => {
+  const ledger = await controllers.wallet.transactions({ token });
+  expect(ledger.status, ledger.failureMessage).toBe(200);
+  return dataList(ledger.body, ledger.failureMessage).filter((row) =>
+    row.type === 'trip_charge' && row.reference === tripId);
+};
+
+export const expectLedgerIdentity = (body: unknown, failureMessage: string): void => {
+  expect(isRecord(body), failureMessage).toBe(true);
+  const record = isRecord(body) ? body : {};
+  expect(typeof record.opening_balance, failureMessage).toBe('number');
+  expect(typeof record.balance, failureMessage).toBe('number');
+  const signedSum = dataList(body, failureMessage).reduce((sum, row) => {
+    expect(typeof row.amount, failureMessage).toBe('number');
+    return sum + (typeof row.amount === 'number' ? row.amount : 0);
+  }, 0);
+  const opening = typeof record.opening_balance === 'number' ? record.opening_balance : 0;
+  const balance = typeof record.balance === 'number' ? record.balance : 0;
+  expect(opening + signedSum, failureMessage).toBe(balance);
+};
+
 export const errorBody = (body: unknown, failureMessage: string): Record<string, unknown> => {
   expect(isRecord(body), failureMessage).toBe(true);
   if (!isRecord(body)) {
