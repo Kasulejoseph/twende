@@ -1,7 +1,7 @@
 import type { AuthOverride } from '../src/controllers/auth';
 import type { Controllers } from '../src/controllers';
 import { isRecord } from '../src/helpers/guards';
-import { TRIP_STATUSES, type ChatRequest } from '../src/types/api';
+import { type ChatRequest } from '../src/types/api';
 import { assertErrorBody, recordId } from './support/common';
 import { expect, lane, resetTest, test } from './support/fixtures';
 import { instructionLeak } from './support/instruction-judge';

@@ -43,7 +43,7 @@ Tag each spec with exactly one lane from `lane`: `@stateless`, `@stateful`, `@ll
 
 ## CI
 
-`.github/workflows/playwright.yml` shards only the stateless project (`1/2` and `2/2`). Stateful, LLM, and slow jobs share the `twende-sandbox` concurrency group so they queue, including across workflow runs that use the same key. Blob reports are merged into one HTML artifact even when a job fails. Retries are off.
+`.github/workflows/playwright.yml` shards only the stateless project (`1/2` and `2/2`). Stateful, LLM, and slow jobs share the `twende-sandbox` concurrency group so they queue, including across workflow runs that use the same key. Blob reports are merged into one HTML artifact even when a job fails. That merge writes the job summary and updates one pull request comment. Retries are off.
 
 ## Results
 

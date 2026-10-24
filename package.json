@@ -28,6 +28,7 @@
   },
   "homepage": "https://github.com/Kasulejoseph/twende#readme",
   "devDependencies": {
+    "@estruyf/github-actions-reporter": "^1.13.0",
     "@google/genai": "^2.31.0",
     "@playwright/test": "^1.64.1",
     "@types/node": "^26.6.5",
