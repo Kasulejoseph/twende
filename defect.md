@@ -14,6 +14,8 @@ DEF-005 is separate. Sarah can cancel a trip after Joseph Ssemanda has completed
 
 DEF-006 is separate. Sarah can rate a trip that is still `requested`.
 
+DEF-007 is separate. Joseph Ssemanda and Grace Achieng can both accept the same requested trip.
+
 ## DEF-001 Replay of the same top-up credits the wallet twice
 
 **Title:** Same idempotency key and body returns the original top-up but credits the wallet again
@@ -196,3 +198,34 @@ The same case also rates a trip that Joseph has started but not completed. That 
 3. As Sarah, `POST /v1/trips/{trip_id}/rating` with `{ "stars": 5 }`.
 
 Found by TC-RAT-06.
+
+## DEF-007 Two drivers can accept the same trip
+
+**Title:** Parallel `POST /v1/driver/trips/{trip_id}/accept` returns 200 to both drivers
+
+**Description:** Sarah books one requested boda. Joseph and Grace call accept at the same time. Both calls return 200 `accepted`. Joseph's body names Joseph Ssemanda, plate `UFA 412K`. Grace's body, about half a second later, names Grace Achieng, plate `UFB 958M`. Each status history contains one `accepted` entry for that response's own timestamp. The second success replaces the driver named in the first.
+
+The case also checks that only the winning driver can complete the trip. That check did not run, because both accepts had already returned 200.
+
+**Severity:** Critical. Two drivers are told they own the same trip.
+
+**Expected results:**
+
+- Exactly one call returns 200.
+- The other returns 409 `TRIP_NOT_AVAILABLE`.
+- `GET /v1/trips/{trip_id}` has one driver, the driver from the 200 response.
+- Only that driver can complete the trip.
+
+**Actual results:**
+
+- Both calls returned 200 for `trp_A938E3741722`.
+- Joseph's response was `accepted` at `2026-10-23T18:47:23.544Z`, driver Joseph Ssemanda, plate `UFA 412K`.
+- Grace's response was `accepted` at `2026-10-23T18:47:23.958Z`, driver Grace Achieng, plate `UFB 958M`.
+
+**Steps to reproduce:**
+
+1. `POST /v1/_reset` with a valid `X-Candidate-Key`.
+2. Book a cash trip for Sarah. `POST /v1/fare-estimates` for a boda from Acacia Mall (`0.33495, 32.59352`) to Ntinda (`0.35402, 32.61498`), then `POST /v1/trips` with a new `Idempotency-Key` and `{ "estimate_id": "<that estimate>", "payment_method": "cash" }`.
+3. At the same time, Joseph and Grace each `POST /v1/driver/trips/{trip_id}/accept`.
+
+Found by TC-ACC-03.
