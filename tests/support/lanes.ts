@@ -23,6 +23,7 @@ export const lane = {
   rating: '@rating',
   arrive: '@arrive',
   start: '@start',
+  complete: '@complete',
   fareEstimate: '@fare-estimate',
 } as const;
 
