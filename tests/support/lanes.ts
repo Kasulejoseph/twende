@@ -25,6 +25,7 @@ export const lane = {
   start: '@start',
   complete: '@complete',
   fareEstimate: '@fare-estimate',
+  chat: '@chat',
 } as const;
 
 export type Lane = (typeof lane)[keyof typeof lane];
