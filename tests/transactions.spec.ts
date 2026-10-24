@@ -15,7 +15,7 @@ const unauthorisedRows = (token: string): readonly { readonly name: string; read
   { name: 'invalid key', auth: { token, candidateKey: 'invalid' } },
 ];
 
-resetTest('TC-TXN-01 ledger lists the top-up and balances', {
+resetTest('TC-TXN-01 the rider\'s ledger lists the top-up and the balance matches the row totals', {
   tag: [lane.stateful, lane.billing, lane.wallet, lane.transaction],
 }, async ({ actors, controllers }) => {
   const sarah = sarahWallet(actors);
@@ -44,7 +44,7 @@ resetTest('TC-TXN-01 ledger lists the top-up and balances', {
   expect(balance, result.failureMessage).toBe(ledger.balance);
 });
 
-test('TC-TXN-02 invalid or missing candidate key', {
+test('TC-TXN-02 a missing or invalid candidate key cannot read the wallet ledger', {
   tag: [lane.stateless, lane.negative, lane.security, lane.wallet, lane.transaction],
 }, async ({ actors, controllers }) => {
   for (const row of unauthorisedRows(actors.sarah.token)) {
@@ -56,7 +56,7 @@ test('TC-TXN-02 invalid or missing candidate key', {
   }
 });
 
-resetTest('TC-TXN-03 completed wallet trip adds a trip charge', {
+resetTest('TC-TXN-03 completing a wallet trip adds one trip charge and reduces the rider\'s balance by the fare', {
   tag: [lane.stateful, lane.billing, lane.e2e, lane.wallet, lane.transaction],
 }, async ({ actors, controllers }) => {
   const sarah = sarahWallet(actors);

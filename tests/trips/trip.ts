@@ -5,7 +5,7 @@ import { expect } from '@playwright/test';
 import type { ApiResult } from '../../src/client/api-client';
 import type { Controllers } from '../../src/controllers';
 import { isRecord } from '../../src/helpers/guards';
-import { assertErrorBody, errorCode } from '../support/common';
+import { assertErrorBody, errorCode, recordId } from '../support/common';
 import { freshBodaEstimate } from './estimate';
 
 export const expectTripError = (result: ApiResult, status: number, code: string): void => {
@@ -51,4 +51,9 @@ export const bookCash = async (controllers: Controllers, token: string): Promise
   });
   expect(result.status, result.failureMessage).toBe(201);
   return result;
+};
+
+export const requestedTripId = async (controllers: Controllers, token: string): Promise<string> => {
+  const created = await bookCash(controllers, token);
+  return recordId(created.body, created.failureMessage);
 };

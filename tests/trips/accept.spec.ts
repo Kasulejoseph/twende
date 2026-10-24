@@ -1,11 +1,10 @@
 import type { ApiResult } from '../../src/client/api-client';
-import type { Controllers } from '../../src/controllers';
 import { isRecord } from '../../src/helpers/guards';
 import { assertErrorBody, recordId } from '../support/common';
 import { expect, lane, resetTest, test } from '../support/fixtures';
-import { bookCash, expectTripError, tripRecord } from './trip';
+import { bookCash, expectTripError, requestedTripId, tripRecord } from './trip';
 
-resetTest('TC-ACC-01 assigned driver accepts a requested trip', {
+resetTest('TC-ACC-01 a boda driver accepts a requested boda and the rider sees that driver assigned', {
   tag: [lane.stateful, lane.smoke, lane.trips, lane.driver],
 }, async ({ actors, controllers }) => {
   const joseph = actors.joseph;
@@ -29,7 +28,7 @@ resetTest('TC-ACC-01 assigned driver accepts a requested trip', {
   expect(trip.driver, current.failureMessage).toEqual(accepted.driver);
 });
 
-resetTest('TC-ACC-02 second driver cannot take an accepted trip', {
+resetTest('TC-ACC-02 a second driver cannot accept a trip another driver has already accepted', {
   tag: [lane.stateful, lane.negative, lane.trips, lane.driver],
 }, async ({ actors, controllers }) => {
   const tripId = await requestedTripId(controllers, actors.sarah.token);
@@ -45,7 +44,7 @@ resetTest('TC-ACC-02 second driver cannot take an accepted trip', {
     .toBe(actors.joseph.name);
 });
 
-resetTest.fixme('TC-ACC-03 concurrent double accept', {
+resetTest.fixme('TC-ACC-03 when two drivers accept the same trip together, only one of them is assigned', {
   tag: [lane.stateful, lane.concurrency, lane.trips, lane.driver, lane.bug],
 }, async ({ actors, controllers }) => {
   const tripId = await requestedTripId(controllers, actors.sarah.token);
@@ -90,7 +89,7 @@ resetTest.fixme('TC-ACC-03 concurrent double accept', {
   expect(assignedDriver(trip, finished.failureMessage).name, finished.failureMessage).toBe(winner.driver.name);
 });
 
-resetTest('TC-ACC-04 driver already on an active trip', {
+resetTest('TC-ACC-04 a driver cannot accept a second trip while they already have one accepted, arrived, or in progress', {
   tag: [lane.stateful, lane.negative, lane.trips, lane.driver],
 }, async ({ actors, controllers }) => {
   const joseph = actors.joseph;
@@ -121,7 +120,7 @@ resetTest('TC-ACC-04 driver already on an active trip', {
   }
 });
 
-test('TC-ACC-05 car driver cannot accept a boda', {
+test('TC-ACC-05 a car driver cannot accept a boda', {
   tag: [lane.stateful, lane.negative, lane.trips, lane.driver],
 }, async ({ actors, controllers }) => {
   const tripId = await requestedTripId(controllers, actors.sarah.token);
@@ -134,7 +133,7 @@ test('TC-ACC-05 car driver cannot accept a boda', {
   expect(tripRecord(current.body, current.failureMessage).status, current.failureMessage).toBe('requested');
 });
 
-resetTest('TC-ACC-06 cannot accept a cancelled trip', {
+resetTest('TC-ACC-06 a driver cannot accept a trip the rider has already cancelled', {
   tag: [lane.stateful, lane.negative, lane.trips, lane.driver],
 }, async ({ actors, controllers }) => {
   const tripId = await requestedTripId(controllers, actors.sarah.token);
@@ -148,7 +147,7 @@ resetTest('TC-ACC-06 cannot accept a cancelled trip', {
   expectTripError(result, 409, 'TRIP_NOT_AVAILABLE');
 });
 
-test('TC-ACC-07 unknown id, missing token, or invalid key', {
+test('TC-ACC-07 accepting an unknown trip returns not found, and a missing token or invalid key is rejected', {
   tag: [lane.stateless, lane.negative, lane.security, lane.trips, lane.driver],
 }, async ({ actors, controllers }) => {
   await test.step('unknown id', async () => {
@@ -171,11 +170,6 @@ test('TC-ACC-07 unknown id, missing token, or invalid key', {
     assertErrorBody(result.body, result.failureMessage);
   });
 });
-
-const requestedTripId = async (controllers: Controllers, token: string): Promise<string> => {
-  const created = await bookCash(controllers, token);
-  return recordId(created.body, created.failureMessage);
-};
 
 const assignedDriver = (trip: Record<string, unknown>, failureMessage: string): Record<string, unknown> => {
   expect(isRecord(trip.driver), failureMessage).toBe(true);

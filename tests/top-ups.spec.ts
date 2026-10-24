@@ -9,7 +9,7 @@ import { expect, lane, resetTest, test } from './support/fixtures';
 
 const topUpAmount = 10_000;
 
-resetTest('TC-TOP-01 MTN MoMo top-up credits wallet', {
+resetTest('TC-TOP-01 an MTN MoMo top-up increases the rider\'s wallet once', {
   tag: [lane.stateful, lane.smoke, lane.billing, lane.wallet, lane.topups],
 }, async ({ actors, controllers }) => {
   const sarah = sarahWallet(actors);
@@ -33,7 +33,7 @@ resetTest('TC-TOP-01 MTN MoMo top-up credits wallet', {
   expect(after, result.failureMessage).toBe(topUp.wallet_balance_after);
 });
 
-resetTest('TC-TOP-02 Airtel Money top-up credits wallet', {
+resetTest('TC-TOP-02 an Airtel Money top-up increases the rider\'s wallet once', {
   tag: [lane.stateful, lane.billing, lane.wallet, lane.topups],
 }, async ({ actors, controllers }) => {
   const sarah = sarahWallet(actors);
@@ -52,7 +52,7 @@ resetTest('TC-TOP-02 Airtel Money top-up credits wallet', {
   expect(after, result.failureMessage).toBe(before + amount);
 });
 
-resetTest('TC-TOP-03 invalid provider', {
+resetTest('TC-TOP-03 a top-up with an unknown mobile-money provider is rejected', {
   tag: [lane.stateful, lane.negative, lane.wallet, lane.topups],
 }, async ({ actors, controllers }) => {
   const sarah = sarahWallet(actors);
@@ -69,7 +69,7 @@ resetTest('TC-TOP-03 invalid provider', {
   expect(after, result.failureMessage).toBe(sarah.openingBalance);
 });
 
-resetTest('TC-TOP-04 invalid phone', {
+resetTest('TC-TOP-04 a top-up with a malformed phone number is rejected and the wallet stays unchanged', {
   tag: [lane.stateful, lane.negative, lane.boundary, lane.wallet, lane.topups],
 }, async ({ actors, controllers }) => {
   const sarah = sarahWallet(actors);
@@ -92,7 +92,7 @@ resetTest('TC-TOP-04 invalid phone', {
   }
 });
 
-resetTest('TC-TOP-05 amount boundaries', {
+resetTest('TC-TOP-05 the minimum and maximum top-up amounts succeed, and amounts outside that range are rejected', {
   tag: [lane.stateful, lane.boundary, lane.billing, lane.wallet, lane.topups],
 }, async ({ actors, controllers }) => {
   const sarah = sarahWallet(actors);
@@ -120,7 +120,7 @@ resetTest('TC-TOP-05 amount boundaries', {
   }
 });
 
-resetTest('TC-TOP-06 missing Idempotency-Key', {
+resetTest('TC-TOP-06 a top-up without an Idempotency-Key is rejected', {
   tag: [lane.stateful, lane.negative, lane.idempotency, lane.wallet, lane.topups],
 }, async ({ actors, controllers }) => {
   const sarah = sarahWallet(actors);
@@ -137,7 +137,7 @@ resetTest('TC-TOP-06 missing Idempotency-Key', {
   expect(after, result.failureMessage).toBe(before);
 });
 
-resetTest.fixme('TC-TOP-07 replay same key and body credits once', {
+resetTest.fixme('TC-TOP-07 replaying the same top-up key and body credits the wallet only once', {
   tag: [lane.stateful, lane.billing, lane.idempotency, lane.wallet, lane.topups, lane.bug],
 }, async ({ actors, controllers }) => {
   const sarah = sarahWallet(actors);
@@ -168,7 +168,7 @@ resetTest.fixme('TC-TOP-07 replay same key and body credits once', {
   await expectOneTopUp(controllers, sarah.token, createdTopUp.id);
 });
 
-resetTest('TC-TOP-08 same key different body rejected', {
+resetTest('TC-TOP-08 reusing a top-up key with a different amount is rejected and credits the wallet once', {
   tag: [lane.stateful, lane.negative, lane.idempotency, lane.wallet, lane.topups],
 }, async ({ actors, controllers }) => {
   const sarah = sarahWallet(actors);
@@ -194,7 +194,7 @@ resetTest('TC-TOP-08 same key different body rejected', {
   expect(after, reused.failureMessage).toBe(before + topUpAmount);
 });
 
-resetTest.fixme('TC-TOP-09 concurrent same-key top-ups credit once', {
+resetTest.fixme('TC-TOP-09 two simultaneous top-ups with the same key credit the wallet only once', {
   tag: [lane.stateful, lane.concurrency, lane.billing, lane.idempotency, lane.wallet, lane.topups, lane.bug],
 }, async ({ actors, controllers }) => {
   const sarah = sarahWallet(actors);
@@ -226,7 +226,7 @@ resetTest.fixme('TC-TOP-09 concurrent same-key top-ups credit once', {
   await expectOneTopUp(controllers, sarah.token, leftTopUp.id);
 });
 
-test('TC-TOP-10 invalid JSON body', {
+test('TC-TOP-10 a top-up body that is not valid JSON is rejected', {
   tag: [lane.stateful, lane.negative, lane.wallet, lane.topups],
 }, async ({ actors, controllers }) => {
   const sarah = sarahWallet(actors);

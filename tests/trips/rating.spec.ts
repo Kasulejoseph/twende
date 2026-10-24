@@ -7,7 +7,7 @@ import { recordId } from '../support/common';
 import { expect, lane, resetTest, test } from '../support/fixtures';
 import { advance, bookCash, expectTripError, tripRecord } from './trip';
 
-resetTest('TC-RAT-01 rate a completed trip', {
+resetTest('TC-RAT-01 a rider rates a completed trip and the comment is saved on the trip', {
   tag: [lane.stateful, lane.smoke, lane.trips, lane.rider, lane.rating],
 }, async ({ actors, controllers }) => {
   // Joseph completes the trip. Sarah rates it.
@@ -26,7 +26,7 @@ resetTest('TC-RAT-01 rate a completed trip', {
   expect(storedRating(current.body, current.failureMessage).stars, current.failureMessage).toBe(5);
 });
 
-resetTest('TC-RAT-02 rate without a comment', {
+resetTest('TC-RAT-02 a rider can rate a completed trip without writing a comment', {
   tag: [lane.stateful, lane.trips, lane.rider, lane.rating],
 }, async ({ actors, controllers }) => {
   const tripId = await completedTripId(controllers, actors.sarah.token, actors.joseph.token);
@@ -37,7 +37,7 @@ resetTest('TC-RAT-02 rate without a comment', {
   expect(saved.comment ?? null, result.failureMessage).toBeNull();
 });
 
-resetTest('TC-RAT-03 missing stars', {
+resetTest('TC-RAT-03 a rating without stars is rejected and the trip stays unrated', {
   tag: [lane.stateful, lane.negative, lane.trips, lane.rider, lane.rating],
 }, async ({ actors, controllers }) => {
   const tripId = await completedTripId(controllers, actors.sarah.token, actors.joseph.token);
@@ -58,7 +58,7 @@ resetTest('TC-RAT-03 missing stars', {
   expect(tripRecord(current.body, current.failureMessage).rating, current.failureMessage).toBeNull();
 });
 
-resetTest('TC-RAT-04 star boundaries', {
+resetTest('TC-RAT-04 the lowest and highest allowed star ratings are saved, and ratings outside that range are rejected', {
   tag: [lane.stateful, lane.boundary, lane.negative, lane.trips, lane.rider, lane.rating],
 }, async ({ actors, controllers }) => {
   let tripId = '';
@@ -81,7 +81,7 @@ resetTest('TC-RAT-04 star boundaries', {
   }
 });
 
-resetTest('TC-RAT-05 second rating is rejected', {
+resetTest('TC-RAT-05 a rider cannot change a rating after the first one is saved', {
   tag: [lane.stateful, lane.negative, lane.trips, lane.rider, lane.rating],
 }, async ({ actors, controllers }) => {
   const tripId = await completedTripId(controllers, actors.sarah.token, actors.joseph.token);
@@ -96,7 +96,7 @@ resetTest('TC-RAT-05 second rating is rejected', {
   expect(storedRating(current.body, current.failureMessage).stars, current.failureMessage).toBe(3);
 });
 
-resetTest.fixme('TC-RAT-06 cannot rate a trip that is not completed', {
+resetTest.fixme('TC-RAT-06 a rider cannot rate a trip the driver has not completed', {
   tag: [lane.stateful, lane.negative, lane.trips, lane.rider, lane.rating, lane.bug],
 }, async ({ actors, controllers }) => {
   await test.step('requested', async () => {
@@ -116,7 +116,7 @@ resetTest.fixme('TC-RAT-06 cannot rate a trip that is not completed', {
   });
 });
 
-test('TC-RAT-07 invalid trip id', {
+test('TC-RAT-07 rating a trip id that does not exist returns trip not found', {
   tag: [lane.stateless, lane.negative, lane.trips, lane.rider, lane.rating],
 }, async ({ actors, controllers }) => {
   const result = await rate(controllers, 'trp_DOESNOTEXIST', actors.sarah.token, { stars: 5 });

@@ -10,7 +10,7 @@ const invalidKeyRows: readonly { readonly name: string; readonly auth: AuthOverr
   { name: 'invalid key', auth: { candidateKey: 'invalid' } },
 ];
 
-test('TC-PLC-01 list places with no query', {
+test('TC-PLC-01 listing places with no search returns the place catalogue', {
   tag: [lane.stateless, lane.smoke, lane.places],
 }, async ({ controllers }) => {
   const result = await controllers.places.list();
@@ -28,7 +28,7 @@ test('TC-PLC-01 list places with no query', {
   }
 });
 
-test('TC-PLC-02 filter by query ntinda', {
+test('TC-PLC-02 searching for a known place returns only places that match that name', {
   tag: [lane.stateless, lane.places],
 }, async ({ controllers }) => {
   const queryOptions = ['ntinda', 'NTINDA', 'NTINDA SHOPPING'];
@@ -48,7 +48,7 @@ test('TC-PLC-02 filter by query ntinda', {
   ]));
 });
 
-test('TC-PLC-03 full-text case-insensitive search', {
+test('TC-PLC-03 a place search matches the name regardless of letter case', {
   tag: [lane.stateless, lane.places],
 }, async ({ controllers }) => {
   const result = await controllers.places.list({ q: 'NTINDA SHOPPING' });
@@ -58,7 +58,7 @@ test('TC-PLC-03 full-text case-insensitive search', {
   ]));
 });
 
-test('TC-PLC-04 unknown location returns empty list', {
+test('TC-PLC-04 searching for an unknown location returns an empty list', {
   tag: [lane.stateless, lane.places, lane.negative],
 }, async ({ controllers }) => {
   const result = await controllers.places.list({ q: 'zzz_not_a_place' });
@@ -66,7 +66,7 @@ test('TC-PLC-04 unknown location returns empty list', {
   expect(dataList(result.body, result.failureMessage), result.failureMessage).toEqual([]);
 });
 
-test('TC-PLC-05 missing or invalid candidate key', {
+test('TC-PLC-05 a missing or invalid candidate key cannot list places', {
   tag: [lane.stateless, lane.negative, lane.security],
 }, async ({ controllers }) => {
   for (const row of invalidKeyRows) {

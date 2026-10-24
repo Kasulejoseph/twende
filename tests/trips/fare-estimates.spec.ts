@@ -22,7 +22,7 @@ const quote = (service: ServiceType, promoCode?: string): FareEstimateRequest =>
   ...(promoCode === undefined ? {} : { promo_code: promoCode }),
 });
 
-test('TC-EST-01 Acacia to Ntinda boda estimate', {
+test('TC-EST-01 a boda quote between two places in the service area returns a fare, distance, and an expiry', {
   tag: [lane.stateless, lane.smoke, lane.trips, lane.rider, lane.fareEstimate],
 }, async ({ actors, controllers }) => {
   const result = await controllers.estimates.create({
@@ -42,7 +42,7 @@ test('TC-EST-01 Acacia to Ntinda boda estimate', {
   expect(Math.abs(estimate.expiresAt - estimate.createdAt - fiveMinutesMs), result.failureMessage).toBeLessThanOrEqual(expiryToleranceMs);
 });
 
-test('TC-EST-02 car and send estimates', {
+test('TC-EST-02 car and send quotes between two places in the service area are accepted', {
   tag: [lane.stateless, lane.trips, lane.rider, lane.fareEstimate],
 }, async ({ actors, controllers }) => {
   for (const service of ['car', 'send'] as const) {
@@ -61,7 +61,7 @@ test('TC-EST-02 car and send estimates', {
   }
 });
 
-test('TC-EST-03 pickup outside Kampala', {
+test('TC-EST-03 a pickup outside the service area is rejected', {
   tag: [lane.stateless, lane.negative, lane.trips, lane.rider, lane.fareEstimate],
 }, async ({ actors, controllers }) => {
   const result = await controllers.estimates.create({
@@ -75,7 +75,7 @@ test('TC-EST-03 pickup outside Kampala', {
   expectEstimateError(result, 422, 'OUTSIDE_SERVICE_AREA');
 });
 
-test('TC-EST-09 dropoff outside Kampala with pickup in Kampala', {
+test('TC-EST-09 a dropoff outside the service area is quoted when the pickup is inside it', {
   tag: [lane.stateless, lane.trips, lane.rider, lane.fareEstimate],
 }, async ({ actors, controllers }) => {
   const result = await controllers.estimates.create({
@@ -93,7 +93,7 @@ test('TC-EST-09 dropoff outside Kampala with pickup in Kampala', {
   expect(dropoff(result.body, result.failureMessage), result.failureMessage).toMatchObject(masaka);
 });
 
-test('TC-EST-04 pickup equals dropoff', {
+test('TC-EST-04 a quote with the same pickup and dropoff is rejected', {
   tag: [lane.stateless, lane.negative],
 }, async ({ actors, controllers }) => {
   const result = await controllers.estimates.create({
@@ -107,7 +107,7 @@ test('TC-EST-04 pickup equals dropoff', {
   expectEstimateError(result, 422, 'SAME_LOCATION');
 });
 
-test('TC-EST-05 invalid promo', {
+test('TC-EST-05 an unknown promo code is rejected', {
   tag: [lane.stateless, lane.negative],
 }, async ({ actors, controllers }) => {
   const result = await controllers.estimates.create({
@@ -117,7 +117,7 @@ test('TC-EST-05 invalid promo', {
   expectEstimateError(result, 422, 'INVALID_PROMO');
 });
 
-test('TC-EST-06 promo not applicable', {
+test('TC-EST-06 a promo that does not apply to the chosen service is rejected', {
   tag: [lane.stateless, lane.negative],
 }, async ({ actors, controllers }) => {
   for (const row of inapplicablePromos) {
@@ -131,7 +131,7 @@ test('TC-EST-06 promo not applicable', {
   }
 });
 
-test('TC-EST-07 body is not valid JSON', {
+test('TC-EST-07 a fare-estimate body that is not valid JSON is rejected', {
   tag: [lane.stateless, lane.negative, lane.trips, lane.rider, lane.fareEstimate],
 }, async ({ actors, controllers }) => {
   const result = await controllers.estimates.create({
@@ -142,7 +142,7 @@ test('TC-EST-07 body is not valid JSON', {
   assertErrorBody(result.body, result.failureMessage);
 });
 
-test('TC-EST-08 missing fields and invalid coordinates', {
+test('TC-EST-08 a fare estimate with a missing field, an invalid coordinate, or an unknown service is rejected', {
   tag: [lane.stateless, lane.negative, lane.boundary, lane.trips, lane.rider, lane.fareEstimate],
 }, async ({ actors, controllers }) => {
   const auth = sarahAuth(actors.sarah.token);

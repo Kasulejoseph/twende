@@ -8,7 +8,7 @@ import { freshBodaEstimate } from './estimate';
 import { advance, bookCash, expectTripError, tripRecord, type DriverAction } from './trip';
 
 
-test('TC-CAN-01 cancel a requested trip with a reason', {
+test('TC-CAN-01 a rider cancels a requested trip and the reason is stored', {
   tag: [lane.stateful, lane.smoke, lane.trips, lane.rider, lane.cancel],
 }, async ({ actors, controllers }) => {
   // Book a requested cash trip, then cancel it.
@@ -23,7 +23,7 @@ test('TC-CAN-01 cancel a requested trip with a reason', {
   ]));
 });
 
-resetTest('TC-CAN-02 cancel an accepted or arrived trip without a reason', {
+resetTest('TC-CAN-02 a rider can cancel a trip the driver has accepted or arrived at without giving a reason', {
   tag: [lane.stateful, lane.trips, lane.rider, lane.cancel],
 }, async ({ actors, controllers }) => {
   const stages: readonly { readonly name: string; readonly through: DriverAction }[] = [
@@ -43,7 +43,7 @@ resetTest('TC-CAN-02 cancel an accepted or arrived trip without a reason', {
   }
 });
 
-resetTest('TC-CAN-03 cannot cancel a trip in progress', {
+resetTest('TC-CAN-03 a rider cannot cancel a trip after the driver has started it', {
   tag: [lane.stateful, lane.negative, lane.trips, lane.rider, lane.cancel],
 }, async ({ actors, controllers }) => {
   const tripId = await cashTripId(controllers, actors.sarah.token);
@@ -58,7 +58,7 @@ resetTest('TC-CAN-03 cannot cancel a trip in progress', {
   expect(tripRecord(current.body, current.failureMessage).status, current.failureMessage).toBe('in_progress');
 });
 
-test('TC-CAN-04 cannot cancel a trip twice', {
+test('TC-CAN-04 a rider cannot cancel a trip that is already cancelled', {
   tag: [lane.stateful, lane.negative, lane.trips, lane.rider, lane.cancel],
 }, async ({ actors, controllers }) => {
   const tripId = await cashTripId(controllers, actors.sarah.token);
@@ -69,7 +69,7 @@ test('TC-CAN-04 cannot cancel a trip twice', {
   expectTripError(second, 409, 'ALREADY_CANCELLED');
 });
 
-resetTest.fixme('TC-CAN-05 cannot cancel a completed trip', {
+resetTest.fixme('TC-CAN-05 a rider cannot cancel a trip after the driver has completed it', {
   tag: [lane.stateful, lane.negative, lane.trips, lane.rider, lane.cancel, lane.bug],
 }, async ({ actors, controllers }) => {
   const tripId = await cashTripId(controllers, actors.sarah.token);
@@ -80,7 +80,7 @@ resetTest.fixme('TC-CAN-05 cannot cancel a completed trip', {
   expectTripError(result, 409, 'TRIP_COMPLETED');
 });
 
-test('TC-CAN-06 unknown id or invalid key', {
+test('TC-CAN-06 cancelling an unknown trip returns not found, and an invalid key is rejected', {
   tag: [lane.stateless, lane.negative, lane.security, lane.trips, lane.rider, lane.cancel],
 }, async ({ actors, controllers }) => {
   await test.step('unknown id', async () => {
@@ -98,7 +98,7 @@ test('TC-CAN-06 unknown id or invalid key', {
   });
 });
 
-resetTest('TC-CAN-07 cancelled wallet trip is not charged', {
+resetTest('TC-CAN-07 cancelling a wallet trip before it starts leaves the rider\'s balance unchanged', {
   tag: [lane.stateful, lane.billing, lane.wallet, lane.rider, lane.cancel],
 }, async ({ actors, controllers }) => {
   const sarah = sarahWallet(actors);

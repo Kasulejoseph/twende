@@ -4,7 +4,7 @@ import { assertErrorBody, dataList, recordId } from '../support/common';
 import { expect, lane, resetTest, test } from '../support/fixtures';
 import { bookCash } from './trip';
 
-test('TC-LST-01 list rider trips', {
+test('TC-LST-01 a rider\'s trip list returns a page of their trips after they book one', {
   tag: [lane.stateful, lane.smoke, lane.trips, lane.rider],
 }, async ({ actors, controllers }) => {
   // Book one trip so the list is not empty.
@@ -19,7 +19,7 @@ test('TC-LST-01 list rider trips', {
   expect(page.rows.length, result.failureMessage).toBeGreaterThan(0);
 });
 
-resetTest('TC-LST-02 empty list after reset', {
+resetTest('TC-LST-02 a rider\'s trip list is empty after the sandbox is reset', {
   tag: [lane.stateful, lane.trips, lane.rider],
 }, async ({ actors, controllers }) => {
   const result = await controllers.trips.list({ auth: { token: actors.sarah.token } });
@@ -29,7 +29,7 @@ resetTest('TC-LST-02 empty list after reset', {
   expect(page.total, result.failureMessage).toBe(0);
 });
 
-resetTest('TC-LST-03 filter by status', {
+resetTest('TC-LST-03 filtering a rider\'s trips by requested hides the trip they cancelled', {
   tag: [lane.stateful, lane.trips, lane.rider],
 }, async ({ actors, controllers }) => {
   // Book two trips, then cancel one.
@@ -56,7 +56,7 @@ resetTest('TC-LST-03 filter by status', {
   expect(page.rows.map((row) => row.id), result.failureMessage).not.toContain(cancelledId);
 });
 
-resetTest.fixme('TC-LST-04 paging', {
+resetTest.fixme('TC-LST-04 the second page of a rider\'s trips returns the trip that was not on the first page', {
   tag: [lane.stateful, lane.trips, lane.rider, lane.bug],
 }, async ({ actors, controllers }) => {
   // Two trips, then one row per page.
@@ -86,7 +86,7 @@ resetTest.fixme('TC-LST-04 paging', {
   expect(secondPage.rows[0]?.id, second.failureMessage).not.toBe(firstPage.rows[0]?.id);
 });
 
-test('TC-LST-05 invalid status is an empty list', {
+test('TC-LST-05 filtering trips by an unknown status is rejected', {
   tag: [lane.stateful, lane.negative],
 }, async ({ actors, controllers }) => {
   await bookCash(controllers, actors.sarah.token);
@@ -100,7 +100,7 @@ test('TC-LST-05 invalid status is an empty list', {
   expect(page.rows, result.failureMessage).toHaveLength(0);
 });
 
-test('TC-LST-06 invalid paging', {
+test('TC-LST-06 a page number or page size outside the allowed range is rejected', {
   tag: [lane.stateless, lane.negative, lane.boundary],
 }, async ({ actors, controllers }) => {
   for (const row of invalidPagingCases) {
@@ -115,7 +115,7 @@ test('TC-LST-06 invalid paging', {
   }
 });
 
-test('TC-LST-07 invalid key', {
+test('TC-LST-07 an invalid candidate key cannot list trips', {
   tag: [lane.stateless, lane.negative, lane.security],
 }, async ({ actors, controllers }) => {
   const result = await controllers.trips.list({
@@ -125,7 +125,7 @@ test('TC-LST-07 invalid key', {
   assertErrorBody(result.body, result.failureMessage);
 });
 
-resetTest('TC-LST-08 Brian does not see Sarah\'s trip', {
+resetTest('TC-LST-08 one rider\'s trip list does not include a trip another rider booked', {
   tag: [lane.stateful, lane.security],
 }, async ({ actors, controllers }) => {
   // Sarah books. Brian has no trips of his own.

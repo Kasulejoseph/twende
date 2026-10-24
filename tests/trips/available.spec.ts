@@ -2,7 +2,7 @@ import { assertErrorBody, dataList, recordId } from '../support/common';
 import { expect, lane, resetTest, test } from '../support/fixtures';
 import { bookCash } from './trip';
 
-resetTest('TC-AVL-01 driver sees a requested boda', {
+resetTest('TC-AVL-01 a boda driver sees a rider\'s requested boda in the available trips', {
   tag: [lane.stateful, lane.smoke, lane.trips, lane.driver],
 }, async ({ actors, controllers }) => {
   // Sarah books a boda and leaves it requested.
@@ -14,7 +14,7 @@ resetTest('TC-AVL-01 driver sees a requested boda', {
   expect(listedIds(result.body, result.failureMessage), result.failureMessage).toContain(tripId);
 });
 
-resetTest('TC-AVL-02 car driver does not see a boda request', {
+resetTest('TC-AVL-02 a car driver does not see a requested boda', {
   tag: [lane.stateful, lane.trips, lane.driver],
 }, async ({ actors, controllers }) => {
   // The only open request is a boda. David drives cars.
@@ -26,7 +26,7 @@ resetTest('TC-AVL-02 car driver does not see a boda request', {
   expect(listedIds(result.body, result.failureMessage), result.failureMessage).not.toContain(tripId);
 });
 
-resetTest('TC-AVL-03 cancelled or accepted trips leave the pool', {
+resetTest('TC-AVL-03 a trip the rider cancelled, or a trip another driver accepted, disappears from the available trips', {
   tag: [lane.stateful, lane.trips, lane.driver],
 }, async ({ actors, controllers }) => {
   await test.step('cancelled', async () => {
@@ -57,7 +57,7 @@ resetTest('TC-AVL-03 cancelled or accepted trips leave the pool', {
   });
 });
 
-test('TC-AVL-04 unauthorized', {
+test('TC-AVL-04 a missing key, an invalid key, or a rider token cannot list available trips', {
   tag: [lane.stateless, lane.negative, lane.security, lane.trips, lane.driver],
 }, async ({ actors, controllers }) => {
   await test.step('missing key', async () => {

@@ -2,7 +2,7 @@ import { recordId } from '../support/common';
 import { expect, lane, test } from '../support/fixtures';
 import { bookCash, expectTripError, tripRecord } from './trip';
 
-test('TC-GET-01 get own trip', {
+test('TC-GET-01 a rider can read a trip they booked, and the fare, places, and status match the booking', {
   tag: [lane.stateful, lane.smoke, lane.trips, lane.rider],
 }, async ({ actors, controllers }) => {
   // Book a cash trip, then read it back.
@@ -20,14 +20,14 @@ test('TC-GET-01 get own trip', {
   expect(trip.status, result.failureMessage).toEqual(booked.status);
 });
 
-test('TC-GET-02 unknown id', {
+test('TC-GET-02 reading a trip id that does not exist returns trip not found', {
   tag: [lane.stateless, lane.negative, lane.trips, lane.rider],
 }, async ({ actors, controllers }) => {
   const result = await controllers.trips.get('trp_DOESNOTEXIST', { token: actors.sarah.token });
   expectTripError(result, 404, 'TRIP_NOT_FOUND');
 });
 
-test.fixme('TC-GET-03 other rider trip is not found', {
+test.fixme('TC-GET-03 one rider cannot read a trip that belongs to another rider', {
   tag: [lane.stateful, lane.security, lane.negative, lane.trips, lane.rider, lane.bug],
 }, async ({ actors, controllers }) => {
   // Sarah books. Brian asks for that id.

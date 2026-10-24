@@ -13,7 +13,7 @@ import { expectTripError, tripRecord } from './trip';
 
 const expiryBufferMs = 15_000;
 
-test('TC-TRP-01 book immediate cash trip', {
+test('TC-TRP-01 a rider books an immediate cash boda and the trip is requested with no driver', {
   tag: [lane.stateful, lane.smoke, lane.trips, lane.rider],
 }, async ({ actors, controllers }) => {
   // Quote Acacia to Ntinda, then book it for cash.
@@ -35,7 +35,7 @@ test('TC-TRP-01 book immediate cash trip', {
   ]));
 });
 
-resetTest('TC-TRP-02 book wallet trip when funded', {
+resetTest('TC-TRP-02 a rider books a wallet trip they can afford and the wallet is not charged yet', {
   tag: [lane.stateful, lane.billing, lane.trips, lane.rider],
 }, async ({ actors, controllers }) => {
   const sarah = sarahWallet(actors);
@@ -54,7 +54,7 @@ resetTest('TC-TRP-02 book wallet trip when funded', {
   expect(balance, result.failureMessage).toBe(sarah.openingBalance);
 });
 
-test.fixme('TC-TRP-03 scheduled trip is returned in UTC', {
+test.fixme('TC-TRP-03 a scheduled departure sent with a local offset is stored as that same UTC instant', {
   tag: [lane.stateful, lane.trips, lane.rider],
 }, async ({ actors, controllers }) => {
   const estimate = await freshBodaEstimate(controllers, actors.sarah.token);
@@ -73,7 +73,7 @@ test.fixme('TC-TRP-03 scheduled trip is returned in UTC', {
   expect(Date.parse(typeof trip.scheduled_for === 'string' ? trip.scheduled_for : ''), result.failureMessage).toBe(departure.getTime());
 });
 
-test('TC-TRP-04 scheduled time boundaries', {
+test('TC-TRP-04 a departure inside the allowed schedule window is accepted, and times outside that window are rejected', {
   tag: [lane.stateful, lane.negative, lane.boundary, lane.trips, lane.rider],
 }, async ({ actors, controllers }) => {
   for (const row of scheduleBoundaryCases) {
@@ -95,7 +95,7 @@ test('TC-TRP-04 scheduled time boundaries', {
   }
 });
 
-resetTest('TC-TRP-05 insufficient wallet balance', {
+resetTest('TC-TRP-05 a rider cannot book a wallet trip that costs more than their balance', {
   tag: [lane.stateful, lane.negative, lane.billing],
 }, async ({ actors, controllers }) => {
   const brian = actors.brian;
@@ -116,7 +116,7 @@ resetTest('TC-TRP-05 insufficient wallet balance', {
   expect(balance, result.failureMessage).toBe(brian.openingBalance);
 });
 
-test('TC-TRP-06 unknown estimate', {
+test('TC-TRP-06 booking an estimate id that was never issued is rejected', {
   tag: [lane.stateless, lane.negative, lane.trips, lane.rider],
 }, async ({ actors, controllers }) => {
   // Book an estimate id that was never issued.
@@ -127,7 +127,7 @@ test('TC-TRP-06 unknown estimate', {
   expectTripError(result, 404, 'ESTIMATE_NOT_FOUND');
 });
 
-test('TC-TRP-07 reused estimate', {
+test('TC-TRP-07 booking the same estimate again with a new key is rejected', {
   tag: [lane.stateful, lane.negative, lane.trips, lane.rider],
 }, async ({ actors, controllers }) => {
   const before = await listTotal(controllers, actors.sarah.token);
@@ -147,7 +147,7 @@ test('TC-TRP-07 reused estimate', {
   expect(await listTotal(controllers, actors.sarah.token), reused.failureMessage).toBe(before + 1);
 });
 
-test('TC-TRP-08 idempotency replay returns the first trip', {
+test('TC-TRP-08 replaying a booking with the same key and body returns the original trip', {
   tag: [lane.stateful, lane.idempotency, lane.trips, lane.rider],
 }, async ({ actors, controllers }) => {
   const before = await listTotal(controllers, actors.sarah.token);
@@ -169,7 +169,7 @@ test('TC-TRP-08 idempotency replay returns the first trip', {
   expect(await listTotal(controllers, actors.sarah.token), replay.failureMessage).toBe(before + 1);
 });
 
-test('TC-TRP-09 same key with a different estimate', {
+test('TC-TRP-09 reusing a booking key with a different estimate does not create a second trip', {
   tag: [lane.stateful, lane.idempotency, lane.negative, lane.trips, lane.rider],
 }, async ({ actors, controllers }) => {
   const before = await listTotal(controllers, actors.sarah.token);
@@ -198,7 +198,7 @@ test('TC-TRP-09 same key with a different estimate', {
   expect(await listTotal(controllers, actors.sarah.token), reused.failureMessage).toBe(before + 1);
 });
 
-test.skip('TC-TRP-10 expired estimate', {
+test.skip('TC-TRP-10 booking an estimate after it has expired is rejected', {
   tag: [lane.slow, lane.negative, lane.trips, lane.rider],
 }, async ({ actors, controllers }) => {
   const estimate = await freshBodaEstimate(controllers, actors.sarah.token);
@@ -213,7 +213,7 @@ test.skip('TC-TRP-10 expired estimate', {
   expectTripError(result, 410, 'ESTIMATE_EXPIRED');
 });
 
-test('TC-TRP-11 invalid key or missing bearer', {
+test('TC-TRP-11 a booking with an invalid candidate key or no bearer token is rejected', {
   tag: [lane.stateless, lane.negative, lane.security],
 }, async ({ actors, controllers }) => {
   const rows: readonly { readonly name: string; readonly auth: AuthOverride }[] = [
@@ -236,7 +236,7 @@ test('TC-TRP-11 invalid key or missing bearer', {
   }
 });
 
-test('TC-TRP-12 invalid payment method', {
+test('TC-TRP-12 a booking with payment method card is rejected', {
   tag: [lane.stateless, lane.negative, lane.trips, lane.rider],
 }, async ({ actors, controllers }) => {
   const estimate = await freshBodaEstimate(controllers, actors.sarah.token);

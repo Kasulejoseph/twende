@@ -21,6 +21,7 @@ export const lane = {
   trips: '@trips',
   cancel: '@cancel',
   rating: '@rating',
+  arrive: '@arrive',
   fareEstimate: '@fare-estimate',
 } as const;
 

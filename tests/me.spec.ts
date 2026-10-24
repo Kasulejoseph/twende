@@ -9,7 +9,7 @@ const unauthorisedRows = (token: string): readonly { readonly name: string; read
   { name: 'missing authorization', auth: { sendAuthorization: false } },
 ];
 
-resetTest('TC-ME-01 valid rider profile and starting wallet', {
+resetTest('TC-ME-01 a rider profile returns the rider\'s name and opening wallet balance after reset', {
   tag: [lane.stateful, lane.smoke, lane.billing, lane.rider],
 }, async ({ actors, controllers }) => {
   const result = await controllers.rider.me({ token: actors.sarah.token });
@@ -22,7 +22,7 @@ resetTest('TC-ME-01 valid rider profile and starting wallet', {
   expect(rider.currency, result.failureMessage).toBe('UGX');
 });
 
-resetTest('TC-ME-02 Brian starting wallet', {
+resetTest('TC-ME-02 a second rider\'s profile returns that rider\'s opening wallet balance after reset', {
   tag: [lane.stateful, lane.billing, lane.rider],
 }, async ({ actors, controllers }) => {
   const result = await controllers.rider.me({ token: actors.brian.token });
@@ -34,7 +34,7 @@ resetTest('TC-ME-02 Brian starting wallet', {
   expect(rider.balance, result.failureMessage).toBe(actors.brian.openingBalance);
 });
 
-test('TC-ME-03 missing key or rider token', {
+test('TC-ME-03 a missing candidate key, an invalid rider token, or a missing bearer token cannot read the rider profile', {
   tag: [lane.stateless, lane.negative, lane.security, lane.billing, lane.rider],
 }, async ({ actors, controllers }) => {
   for (const row of unauthorisedRows(actors.sarah.token)) {
@@ -46,7 +46,7 @@ test('TC-ME-03 missing key or rider token', {
   }
 });
 
-test('TC-ME-04 driver token on rider endpoint', {
+test('TC-ME-04 a driver token cannot read the rider profile', {
   tag: [lane.stateless, lane.negative, lane.security, lane.billing, lane.driver],
 }, async ({ actors, controllers }) => {
   const result = await controllers.rider.me({ token: actors.joseph.token });
