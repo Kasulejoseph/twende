@@ -1,7 +1,6 @@
-import type { Controllers } from '../../src/controllers';
 import { assertErrorBody } from '../support/common';
 import { expect, lane, resetTest, test } from '../support/fixtures';
-import { expectTripError, requestedTripId, tripRecord } from './trip';
+import { expectStatus, expectTripError, requestedTripId, tripRecord } from './trip';
 
 resetTest('TC-ARR-01 the assigned driver marks an accepted trip as arrived and the status history records it', {
   tag: [lane.stateful, lane.smoke, lane.trips, lane.driver, lane.arrive],
@@ -90,14 +89,3 @@ test('TC-ARR-04 arriving at an unknown trip returns not found, and an invalid ke
     assertErrorBody(result.body, result.failureMessage);
   });
 });
-
-const expectStatus = async (
-  controllers: Controllers,
-  token: string,
-  tripId: string,
-  status: string,
-): Promise<void> => {
-  const current = await controllers.trips.get(tripId, { token });
-  expect(current.status, current.failureMessage).toBe(200);
-  expect(tripRecord(current.body, current.failureMessage).status, current.failureMessage).toBe(status);
-};

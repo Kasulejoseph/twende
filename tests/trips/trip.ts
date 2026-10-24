@@ -57,3 +57,14 @@ export const requestedTripId = async (controllers: Controllers, token: string): 
   const created = await bookCash(controllers, token);
   return recordId(created.body, created.failureMessage);
 };
+
+export const expectStatus = async (
+  controllers: Controllers,
+  token: string,
+  tripId: string,
+  status: string,
+): Promise<void> => {
+  const current = await controllers.trips.get(tripId, { token });
+  expect(current.status, current.failureMessage).toBe(200);
+  expect(tripRecord(current.body, current.failureMessage).status, current.failureMessage).toBe(status);
+};

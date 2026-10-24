@@ -93,3 +93,16 @@ export const assertErrorBody = (body: unknown, failureMessage: string): void => 
   expect(typeof body.error.message, failureMessage).toBe('string');
   expect(nonEmptyString(body.error.request_id), failureMessage).toBe(true);
 };
+
+export const errorBody = (body: unknown, failureMessage: string): Record<string, unknown> => {
+  expect(isRecord(body), failureMessage).toBe(true);
+  if (!isRecord(body)) {
+    return {};
+  }
+
+  expect(isRecord(body.error), failureMessage).toBe(true);
+  if (!isRecord(body.error)) {
+    return {};
+  }
+  return body.error;
+};

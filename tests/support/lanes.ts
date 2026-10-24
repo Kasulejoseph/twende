@@ -22,6 +22,7 @@ export const lane = {
   cancel: '@cancel',
   rating: '@rating',
   arrive: '@arrive',
+  start: '@start',
   fareEstimate: '@fare-estimate',
 } as const;
 
