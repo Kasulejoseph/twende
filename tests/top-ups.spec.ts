@@ -194,7 +194,7 @@ resetTest('TC-TOP-08 reusing a top-up key with a different amount is rejected an
   expect(after, reused.failureMessage).toBe(before + topUpAmount);
 });
 
-resetTest.fixme('TC-TOP-09 two simultaneous top-ups with the same key credit the wallet only once', {
+resetTest('TC-TOP-09 two simultaneous top-ups with the same key credit the wallet only once', {
   tag: [lane.stateful, lane.concurrency, lane.billing, lane.idempotency, lane.wallet, lane.topups, lane.bug],
 }, async ({ actors, controllers }) => {
   const sarah = sarahWallet(actors);
