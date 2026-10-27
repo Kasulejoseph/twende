@@ -35,15 +35,16 @@ jobs:
             shard: 1/1
             workers: 1
             concurrency: twende-sandbox
-          - project: slow
-            shard: 1/1
-            workers: 1
-            concurrency: twende-sandbox
     env:
       CI: true
       BASE_URL: https://staging-twende-backend.safeboda.com/api/qa-sandbox
       CANDIDATE_KEY: ${{ secrets.CANDIDATE_KEY }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      SARAH_TOKEN: ${{ secrets.SARAH_TOKEN }}
+      BRIAN_TOKEN: ${{ secrets.BRIAN_TOKEN }}
+      JOSEPH_TOKEN: ${{ secrets.JOSEPH_TOKEN }}
+      GRACE_TOKEN: ${{ secrets.GRACE_TOKEN }}
+      DAVID_TOKEN: ${{ secrets.DAVID_TOKEN }}
       PLAYWRIGHT_BLOB_NAME: ${{ matrix.project }}-${{ strategy.job-index }}
     steps:
       - uses: actions/checkout@v5
@@ -66,10 +67,52 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
 
+  slow:
+    name: slow 1/1
+    needs: test
+    if: ${{ !cancelled() }}
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    concurrency:
+      group: twende-sandbox
+      cancel-in-progress: false
+      queue: max
+    env:
+      CI: true
+      BASE_URL: https://staging-twende-backend.safeboda.com/api/qa-sandbox
+      CANDIDATE_KEY: ${{ secrets.CANDIDATE_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      SARAH_TOKEN: ${{ secrets.SARAH_TOKEN }}
+      BRIAN_TOKEN: ${{ secrets.BRIAN_TOKEN }}
+      JOSEPH_TOKEN: ${{ secrets.JOSEPH_TOKEN }}
+      GRACE_TOKEN: ${{ secrets.GRACE_TOKEN }}
+      DAVID_TOKEN: ${{ secrets.DAVID_TOKEN }}
+      PLAYWRIGHT_BLOB_NAME: slow-1
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Prepare env
+        run: cp .env.example .env
+      - name: Run slow
+        run: npx playwright test --project=slow --shard=1/1 --workers=1
+      - name: Upload blob report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: blob-report-slow-1
+          path: blob-report/
+          retention-days: 14
+          if-no-files-found: ignore
+
   report:
     name: Merge reports
     if: ${{ !cancelled() }}
-    needs: test
+    needs: [test, slow]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -107,5 +150,5 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
       - name: Fail when tests failed
-        if: needs.test.result != 'success'
+        if: needs.test.result != 'success' || needs.slow.result != 'success'
         run: exit 1

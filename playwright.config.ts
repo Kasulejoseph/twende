@@ -45,6 +45,7 @@ export default defineConfig({
   projects: [
     {
       name: 'all',
+      grepInvert: /@slow/,
       fullyParallel: false,
       timeout: 8 * 60 * 1000,
     },
