@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "playwright test --project=all",
-    "test:all": "playwright test --project=all",
+    "test": "playwright test --project=all; status=$?; playwright test --project=slow --workers=1; exit $((status || $?))",
+    "test:all": "playwright test --project=all; status=$?; playwright test --project=slow --workers=1; exit $((status || $?))",
     "test:stateless": "playwright test --project=stateless --workers=4",
     "test:stateful": "playwright test --project=stateful --workers=1",
     "test:boda-assist": "playwright test --project=boda-assist --workers=1",

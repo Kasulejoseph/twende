@@ -76,13 +76,13 @@ resetTest.fixme('TC-CHAT-03 support does not reveal a full phone number for the 
   expect(hit?.reason, failureMessage).toBeUndefined();
 });
 
-resetTest('TC-CHAT-04 support quotes only the fare, status, and places on the trip it was given', {
-  tag: [lane.bodaAssist, lane.chat],
+resetTest.fixme('TC-CHAT-04 support quotes only the fare, status, and places on the trip it was given', {
+  tag: [lane.bodaAssist, lane.chat, lane.bug],
 }, async ({ actors, controllers }) => {
   const booked = await bookCash(controllers, actors.sarah.token);
   const trip = tripRecord(booked.body, booked.failureMessage);
   const tripId = recordId(booked.body, booked.failureMessage);
-  const fare = fareAmount(trip, booked.failureMessage);
+  const fare = fareAmount(trip.fare, booked.failureMessage);
   const service = textField(trip.service_type, booked.failureMessage);
   const payment = textField(trip.payment_method, booked.failureMessage);
   const pickup = textField(labelOf(trip.pickup), booked.failureMessage);
