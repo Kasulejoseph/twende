@@ -43,7 +43,7 @@ Tag each spec with exactly one lane from `lane`: `@stateless`, `@stateful`, `@bo
 
 ## CI
 
-`.github/workflows/playwright.yml` shards only the stateless project (`1/2` and `2/2`). Those two shards start together and are not in the sandbox queue. Stateful and boda-assist share the `twende-sandbox` concurrency group. That group queues pending jobs and runs them one at a time, including across workflow runs that use the same key. The slow job starts with the other jobs and runs beside them, so the five-minute quote wait overlaps the rest of the suite. Blob reports are merged into one HTML artifact even when a job fails, and the workflow still fails when a test fails. That merge writes the job summary and updates one pull request comment. Retries are off.
+`.github/workflows/playwright.yml` shards only the stateless project (`1/2` and `2/2`). Those two shards start together and are not in the sandbox queue. Stateful, boda-assist, and slow share the `twende-sandbox` concurrency group. That group queues pending jobs and runs them one at a time, including across workflow runs that use the same key. The slow job starts with the stateless shards. It does not run beside a job that resets the sandbox, because that reset deletes the quote the slow test is waiting on. Blob reports are merged into one HTML artifact even when a job fails, and the workflow still fails when a test fails. That merge writes the job summary and updates one pull request comment. Retries are off.
 
 ## Coverage
 
@@ -66,7 +66,7 @@ TC-TRP-10 runs on `@slow`: it waits out the five-minute quote and expects `410 E
 | TC-CHAT-06 | DEF-010. Chat prints its hidden instructions, including an internal staff code. |
 | TC-TRP-03 | A `+03:00` departure is not stored as that same UTC instant. `defect.md` has no note for it. |
 
-Run the suite with the commands above. `npm test` runs every spec except `@slow`, then the slow project, one worker. A case that resets the sandbox needs `--workers=1`. CI shards only `@stateless`, and those two shards start together. Stateful and boda-assist share one queue so they do not reset the sandbox together. The slow job starts with them and runs beside them.
+Run the suite with the commands above. `npm test` runs every spec except `@slow`, then the slow project, one worker. A case that resets the sandbox needs `--workers=1`. CI shards only `@stateless`, and those two shards start together. Stateful, boda-assist, and slow share one queue so they do not reset the sandbox together. The slow job starts with the stateless shards.
 
 ## With more time
 

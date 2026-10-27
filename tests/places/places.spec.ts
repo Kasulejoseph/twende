@@ -1,7 +1,7 @@
-import { placesKeyRows } from '../data/auth';
-import { ntindaPattern, ntindaPlace, ntindaQueries } from '../data/places';
-import { assertErrorBody, dataList, nonEmptyString } from '../support/common';
-import { expect, lane, test } from '../support/fixtures';
+import { placesKeyRows } from '../../data/auth';
+import { ntindaPattern, ntindaPlace, ntindaQueries } from '../../data/places';
+import { assertErrorBody, dataList, nonEmptyString } from '../../support/common';
+import { expect, lane, test } from '../../support/fixtures';
 
 test('TC-PLC-01 listing places with no search returns the place catalogue', {
   tag: [lane.stateless, lane.smoke, lane.places],
