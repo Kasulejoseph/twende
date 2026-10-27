@@ -106,6 +106,10 @@ jobs:
     if: ${{ !cancelled() }}
     timeout-minutes: 30
     runs-on: ubuntu-latest
+    concurrency:
+      group: twende-sandbox
+      cancel-in-progress: false
+      queue: max
     env:
       CI: true
       BASE_URL: https://staging-twende-backend.safeboda.com/api/qa-sandbox
