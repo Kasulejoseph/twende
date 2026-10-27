@@ -192,7 +192,7 @@ test('TC-TRP-09 reusing a booking key with a different estimate does not create 
   expect(await listTotal(controllers, actors.sarah.token), reused.failureMessage).toBe(before + 1);
 });
 
-test.skip('TC-TRP-10 booking an estimate after it has expired is rejected', {
+test('TC-TRP-10 booking an estimate after it has expired is rejected', {
   tag: [lane.slow, lane.negative, lane.trips, lane.rider],
 }, async ({ actors, controllers }) => {
   const estimate = await freshBodaEstimate(controllers, actors.sarah.token);

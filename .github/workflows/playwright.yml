@@ -68,7 +68,7 @@ jobs:
 
   report:
     name: Merge reports
-    if: always()
+    if: ${{ !cancelled() }}
     needs: test
     runs-on: ubuntu-latest
     permissions:
@@ -106,3 +106,6 @@ jobs:
           path: playwright-report/
           retention-days: 14
           if-no-files-found: ignore
+      - name: Fail when tests failed
+        if: needs.test.result != 'success'
+        run: exit 1
