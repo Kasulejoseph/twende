@@ -7,34 +7,68 @@ on:
     branches: [main, master]
 
 jobs:
-  test:
+  stateless:
+    name: stateless ${{ matrix.shard }}
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard: 1/2
+            workers: 2
+          - shard: 2/2
+            workers: 2
+    env:
+      CI: true
+      BASE_URL: https://staging-twende-backend.safeboda.com/api/qa-sandbox
+      CANDIDATE_KEY: ${{ secrets.CANDIDATE_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      SARAH_TOKEN: ${{ secrets.SARAH_TOKEN }}
+      BRIAN_TOKEN: ${{ secrets.BRIAN_TOKEN }}
+      JOSEPH_TOKEN: ${{ secrets.JOSEPH_TOKEN }}
+      GRACE_TOKEN: ${{ secrets.GRACE_TOKEN }}
+      DAVID_TOKEN: ${{ secrets.DAVID_TOKEN }}
+      PLAYWRIGHT_BLOB_NAME: stateless-${{ strategy.job-index }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Prepare env
+        run: cp .env.example .env
+      - name: Run stateless shard ${{ matrix.shard }}
+        run: npx playwright test --project=stateless --shard=${{ matrix.shard }} --workers=${{ matrix.workers }}
+      - name: Upload blob report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: blob-report-stateless-${{ strategy.job-index }}
+          path: blob-report/
+          retention-days: 14
+          if-no-files-found: ignore
+
+  sandbox:
     name: ${{ matrix.project }} ${{ matrix.shard }}
     timeout-minutes: 30
     runs-on: ubuntu-latest
     concurrency:
-      group: ${{ matrix.concurrency }}
+      group: twende-sandbox
       cancel-in-progress: false
       queue: max
     strategy:
       fail-fast: false
       matrix:
         include:
-          - project: stateless
-            shard: 1/2
-            workers: 2
-            concurrency: twende-stateless-1
-          - project: stateless
-            shard: 2/2
-            workers: 2
-            concurrency: twende-stateless-2
           - project: stateful
             shard: 1/1
             workers: 1
-            concurrency: twende-sandbox
           - project: boda-assist
             shard: 1/1
             workers: 1
-            concurrency: twende-sandbox
     env:
       CI: true
       BASE_URL: https://staging-twende-backend.safeboda.com/api/qa-sandbox
@@ -69,14 +103,9 @@ jobs:
 
   slow:
     name: slow 1/1
-    needs: test
     if: ${{ !cancelled() }}
     timeout-minutes: 30
     runs-on: ubuntu-latest
-    concurrency:
-      group: twende-sandbox
-      cancel-in-progress: false
-      queue: max
     env:
       CI: true
       BASE_URL: https://staging-twende-backend.safeboda.com/api/qa-sandbox
@@ -112,7 +141,7 @@ jobs:
   report:
     name: Merge reports
     if: ${{ !cancelled() }}
-    needs: [test, slow]
+    needs: [stateless, sandbox, slow]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -150,5 +179,5 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
       - name: Fail when tests failed
-        if: needs.test.result != 'success' || needs.slow.result != 'success'
+        if: needs.stateless.result != 'success' || needs.sandbox.result != 'success' || needs.slow.result != 'success'
         run: exit 1
