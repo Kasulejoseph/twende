@@ -1,26 +1,10 @@
-import type { AuthOverride } from '../../src/controllers/auth';
-import { isRecord } from '../../src/helpers/guards';
-import type { ApiResult } from '../../src/client/api-client';
-import type { FareEstimateRequest, ServiceType } from '../../src/types/api';
-import { inapplicablePromos, invalidPromoCode } from '../data/promos';
-import { assertErrorBody, errorCode, nonEmptyString } from '../support/common';
-import { expect, lane, test } from '../support/fixtures';
+import type { FareEstimateRequest } from '../../src/types/api';
+import { acacia, masaka, ntinda } from '../../data/places';
+import { inapplicablePromos, invalidPromoCode } from '../../data/promos';
+import { assertErrorBody, nonEmptyString } from '../../support/common';
+import { expect, lane, test } from '../../support/fixtures';
 import { estimateView, fareAmount } from './estimate';
-
-const acacia = { lat: 0.33495, lng: 32.59352 } as const;
-const ntinda = { lat: 0.35402, lng: 32.61498 } as const;
-const masaka = { lat: -0.36182, lng: 31.79046 } as const;
-const fiveMinutesMs = 5 * 60 * 1000;
-const expiryToleranceMs = 5_000;
-
-const sarahAuth = (token: string): AuthOverride => ({ token });
-
-const quote = (service: ServiceType, promoCode?: string): FareEstimateRequest => ({
-  pickup: acacia,
-  dropoff: ntinda,
-  service_type: service,
-  ...(promoCode === undefined ? {} : { promo_code: promoCode }),
-});
+import { dropoff, expectEstimateError, expiryToleranceMs, fiveMinutesMs, quote, sarahAuth } from './trip';
 
 test('TC-EST-01 a boda quote between two places in the service area returns a fare, distance, and an expiry', {
   tag: [lane.stateless, lane.smoke, lane.trips, lane.rider, lane.fareEstimate],
@@ -168,16 +152,3 @@ test('TC-EST-08 a fare estimate with a missing field, an invalid coordinate, or 
     });
   }
 });
-
-const dropoff = (body: unknown, failureMessage: string): Record<string, unknown> => {
-  expect(isRecord(body), failureMessage).toBe(true);
-  const record = isRecord(body) ? body : {};
-  expect(isRecord(record.dropoff), failureMessage).toBe(true);
-  return isRecord(record.dropoff) ? record.dropoff : {};
-};
-
-const expectEstimateError = (result: ApiResult, status: number, code: string): void => {
-  expect(result.status, result.failureMessage).toBe(status);
-  assertErrorBody(result.body, result.failureMessage);
-  expect(errorCode(result.body), result.failureMessage).toBe(code);
-};

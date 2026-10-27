@@ -1,5 +1,5 @@
-import { recordId } from '../support/common';
-import { expect, lane, test } from '../support/fixtures';
+import { recordId } from '../../support/common';
+import { expect, lane, test } from '../../support/fixtures';
 import { bookCash, expectTripError, tripRecord } from './trip';
 
 test('TC-GET-01 a rider can read a trip they booked, and the fare, places, and status match the booking', {

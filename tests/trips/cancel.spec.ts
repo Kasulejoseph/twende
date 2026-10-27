@@ -1,18 +1,15 @@
 import { randomUUID } from 'node:crypto';
 
-import type { ApiResult } from '../../src/client/api-client';
-import type { Controllers } from '../../src/controllers';
-import { assertErrorBody, balanceOf, dataList, recordId, sarahWallet } from '../support/common';
-import { expect, lane, resetTest, test } from '../support/fixtures';
+import { assertErrorBody, balanceOf, dataList, recordId, sarahWallet } from '../../support/common';
+import { expect, lane, resetTest, test } from '../../support/fixtures';
 import { freshBodaEstimate } from './estimate';
-import { advance, bookCash, expectTripError, tripRecord, type DriverAction } from './trip';
-
+import { advance, cancel, expectTripError, requestedTripId, tripRecord, type DriverAction } from './trip';
 
 test('TC-CAN-01 a rider cancels a requested trip and the reason is stored', {
   tag: [lane.stateful, lane.smoke, lane.trips, lane.rider, lane.cancel],
 }, async ({ actors, controllers }) => {
   // Book a requested cash trip, then cancel it.
-  const tripId = await cashTripId(controllers, actors.sarah.token);
+  const tripId = await requestedTripId(controllers, actors.sarah.token);
   const result = await cancel(controllers, tripId, actors.sarah.token, { reason: 'Changed plans' });
   expect(result.status, result.failureMessage).toBe(200);
   const trip = tripRecord(result.body, result.failureMessage);
@@ -33,7 +30,7 @@ resetTest('TC-CAN-02 a rider can cancel a trip the driver has accepted or arrive
 
   for (const stage of stages) {
     await test.step(stage.name, async () => {
-      const tripId = await cashTripId(controllers, actors.sarah.token);
+      const tripId = await requestedTripId(controllers, actors.sarah.token);
       // Joseph moves the trip to this stage. Sarah cancels with an empty body.
       await advance(controllers, tripId, actors.joseph.token, stage.through);
       const result = await cancel(controllers, tripId, actors.sarah.token);
@@ -46,7 +43,7 @@ resetTest('TC-CAN-02 a rider can cancel a trip the driver has accepted or arrive
 resetTest('TC-CAN-03 a rider cannot cancel a trip after the driver has started it', {
   tag: [lane.stateful, lane.negative, lane.trips, lane.rider, lane.cancel],
 }, async ({ actors, controllers }) => {
-  const tripId = await cashTripId(controllers, actors.sarah.token);
+  const tripId = await requestedTripId(controllers, actors.sarah.token);
   // Joseph accepts, arrives, and starts.
   await advance(controllers, tripId, actors.joseph.token, 'start');
 
@@ -61,7 +58,7 @@ resetTest('TC-CAN-03 a rider cannot cancel a trip after the driver has started i
 test('TC-CAN-04 a rider cannot cancel a trip that is already cancelled', {
   tag: [lane.stateful, lane.negative, lane.trips, lane.rider, lane.cancel],
 }, async ({ actors, controllers }) => {
-  const tripId = await cashTripId(controllers, actors.sarah.token);
+  const tripId = await requestedTripId(controllers, actors.sarah.token);
   const first = await cancel(controllers, tripId, actors.sarah.token);
   expect(first.status, first.failureMessage).toBe(200);
 
@@ -72,7 +69,7 @@ test('TC-CAN-04 a rider cannot cancel a trip that is already cancelled', {
 resetTest.fixme('TC-CAN-05 a rider cannot cancel a trip after the driver has completed it', {
   tag: [lane.stateful, lane.negative, lane.trips, lane.rider, lane.cancel, lane.bug],
 }, async ({ actors, controllers }) => {
-  const tripId = await cashTripId(controllers, actors.sarah.token);
+  const tripId = await requestedTripId(controllers, actors.sarah.token);
   // Joseph accepts, arrives, starts, and completes.
   await advance(controllers, tripId, actors.joseph.token, 'complete');
 
@@ -126,15 +123,3 @@ resetTest('TC-CAN-07 cancelling a wallet trip before it starts leaves the rider\
     row.type === 'trip_charge' && row.reference === tripId);
   expect(charges, ledger.failureMessage).toEqual([]);
 });
-
-const cashTripId = async (controllers: Controllers, token: string): Promise<string> => {
-  const created = await bookCash(controllers, token);
-  return recordId(created.body, created.failureMessage);
-};
-
-const cancel = (
-  controllers: Controllers,
-  tripId: string,
-  token: string,
-  body: { readonly reason?: string } = {},
-): Promise<ApiResult> => controllers.trips.cancel(tripId, { auth: { token }, body });

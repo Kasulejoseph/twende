@@ -1,9 +1,9 @@
 import { expect } from '@playwright/test';
 
-import type { Controllers } from '../../src/controllers';
-import { isRecord } from '../../src/helpers/guards';
-import type { Actors } from '../../src/types/actors';
-import type { TopUpRequest } from '../../src/types/api';
+import type { Controllers } from '../src/controllers';
+import { isRecord } from '../src/helpers/guards';
+import type { Actors } from '../src/types/actors';
+import type { TopUpRequest } from '../src/types/api';
 
 export const nonEmptyString = (value: unknown): boolean =>
   typeof value === 'string' && value.length > 0;

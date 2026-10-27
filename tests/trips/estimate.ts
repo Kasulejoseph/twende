@@ -2,10 +2,8 @@ import { expect } from '@playwright/test';
 
 import type { Controllers } from '../../src/controllers';
 import { isRecord } from '../../src/helpers/guards';
-import { nonEmptyString } from '../support/common';
-
-const acacia = { lat: 0.33495, lng: 32.59352 } as const;
-const ntinda = { lat: 0.35402, lng: 32.61498 } as const;
+import { acacia, ntinda } from '../../data/places';
+import { nonEmptyString } from '../../support/common';
 
 export interface EstimateView {
   readonly id: string;

@@ -1,6 +1,6 @@
-import { assertErrorBody, dataList, recordId } from '../support/common';
-import { expect, lane, resetTest, test } from '../support/fixtures';
-import { bookCash } from './trip';
+import { assertErrorBody, recordId } from '../../support/common';
+import { expect, lane, resetTest, test } from '../../support/fixtures';
+import { bookCash, listedIds } from './trip';
 
 resetTest('TC-AVL-01 a boda driver sees a rider\'s requested boda in the available trips', {
   tag: [lane.stateful, lane.smoke, lane.trips, lane.driver],
@@ -84,6 +84,3 @@ test('TC-AVL-04 a missing key, an invalid key, or a rider token cannot list avai
     assertErrorBody(result.body, result.failureMessage);
   });
 });
-
-const listedIds = (body: unknown, failureMessage: string): readonly unknown[] =>
-  dataList(body, failureMessage).map((row) => row.id);

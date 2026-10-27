@@ -1,17 +1,11 @@
 import { randomUUID } from 'node:crypto';
 
-import type { Controllers } from '../../src/controllers';
 import type { AuthOverride } from '../../src/controllers/auth';
-import type { ApiResult } from '../../src/client/api-client';
-import { isRecord } from '../../src/helpers/guards';
-import type { PaymentMethod } from '../../src/types/api';
-import { scheduleBoundaryCases, scheduledTripLeadMinutes } from '../data/schedules';
-import { assertErrorBody, balanceOf, recordId, sarahWallet } from '../support/common';
-import { expect, lane, resetTest, test } from '../support/fixtures';
+import { scheduleBoundaryCases, scheduledTripLeadMinutes } from '../../data/schedules';
+import { assertErrorBody, balanceOf, recordId, sarahWallet } from '../../support/common';
+import { expect, lane, resetTest, test } from '../../support/fixtures';
 import { fareAmount, fareCurrency, freshBodaEstimate } from './estimate';
-import { expectTripError, tripRecord } from './trip';
-
-const expiryBufferMs = 15_000;
+import { book, expiryBufferMs, expectTripError, listTotal, plus0300, tripRecord } from './trip';
 
 test('TC-TRP-01 a rider books an immediate cash boda and the trip is requested with no driver', {
   tag: [lane.stateful, lane.smoke, lane.trips, lane.rider],
@@ -248,39 +242,3 @@ test('TC-TRP-12 a booking with payment method card is rejected', {
   });
   expectTripError(result, 422, 'VALIDATION_ERROR');
 });
-
-interface Booking {
-  readonly estimateId: string;
-  readonly paymentMethod: PaymentMethod;
-  readonly scheduledFor?: string;
-  readonly idempotencyKey?: string;
-  readonly auth?: AuthOverride;
-}
-
-const book = (
-  controllers: Controllers,
-  token: string,
-  booking: Booking,
-): Promise<ApiResult> => controllers.trips.create({
-  auth: booking.auth ?? { token },
-  idempotencyKey: booking.idempotencyKey ?? randomUUID(),
-  body: {
-    estimate_id: booking.estimateId,
-    payment_method: booking.paymentMethod,
-    ...(booking.scheduledFor === undefined ? {} : { scheduled_for: booking.scheduledFor }),
-  },
-});
-
-const plus0300 = (instant: Date): string => {
-  const shifted = new Date(instant.getTime() + 3 * 60 * 60 * 1000);
-  return `${shifted.toISOString().slice(0, -1)}+03:00`;
-};
-
-const listTotal = async (controllers: Controllers, token: string): Promise<number> => {
-  const listed = await controllers.trips.list({ auth: { token } });
-  expect(listed.status, listed.failureMessage).toBe(200);
-  expect(isRecord(listed.body), listed.failureMessage).toBe(true);
-  const body = isRecord(listed.body) ? listed.body : {};
-  expect(typeof body.total, listed.failureMessage).toBe('number');
-  return typeof body.total === 'number' ? body.total : 0;
-};

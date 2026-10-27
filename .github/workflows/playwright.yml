@@ -31,7 +31,7 @@ jobs:
             shard: 1/1
             workers: 1
             concurrency: twende-sandbox
-          - project: llm
+          - project: boda-assist
             shard: 1/1
             workers: 1
             concurrency: twende-sandbox

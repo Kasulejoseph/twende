@@ -1,7 +1,7 @@
 export const lane = {
   stateless: '@stateless',
   stateful: '@stateful',
-  llm: '@llm',
+  bodaAssist: '@boda-assist',
   slow: '@slow',
   smoke: '@smoke',
   places: '@places',

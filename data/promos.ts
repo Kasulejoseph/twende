@@ -1,4 +1,4 @@
-import type { ServiceType } from '../../src/types/api';
+import type { ServiceType } from '../src/types/api';
 
 export interface InapplicablePromoCase {
   readonly promo: string;

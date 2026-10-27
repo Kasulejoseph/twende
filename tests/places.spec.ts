@@ -1,14 +1,7 @@
-import type { AuthOverride } from '../src/controllers/auth';
-import { assertErrorBody, dataList, nonEmptyString } from './support/common';
-import { expect, lane, test } from './support/fixtures';
-
-const ntinda = { id: 'plc_ntinda', lat: 0.35402, lng: 32.61498 } as const;
-const ntindaPattern = /ntinda/i;
-
-const invalidKeyRows: readonly { readonly name: string; readonly auth: AuthOverride }[] = [
-  { name: 'missing key', auth: { sendCandidateKey: false } },
-  { name: 'invalid key', auth: { candidateKey: 'invalid' } },
-];
+import { placesKeyRows } from '../data/auth';
+import { ntindaPattern, ntindaPlace, ntindaQueries } from '../data/places';
+import { assertErrorBody, dataList, nonEmptyString } from '../support/common';
+import { expect, lane, test } from '../support/fixtures';
 
 test('TC-PLC-01 listing places with no search returns the place catalogue', {
   tag: [lane.stateless, lane.smoke, lane.places],
@@ -31,8 +24,7 @@ test('TC-PLC-01 listing places with no search returns the place catalogue', {
 test('TC-PLC-02 searching for a known place returns only places that match that name', {
   tag: [lane.stateless, lane.places],
 }, async ({ controllers }) => {
-  const queryOptions = ['ntinda', 'NTINDA', 'NTINDA SHOPPING'];
-  const randomQuery = queryOptions[Math.floor(Math.random() * queryOptions.length)];
+  const randomQuery = ntindaQueries[Math.floor(Math.random() * ntindaQueries.length)];
 
   const result = await controllers.places.list({ q: randomQuery });
   expect(result.status, result.failureMessage).toBe(200);
@@ -54,7 +46,7 @@ test('TC-PLC-03 a place search matches the name regardless of letter case', {
   const result = await controllers.places.list({ q: 'NTINDA SHOPPING' });
   expect(result.status, result.failureMessage).toBe(200);
   expect(dataList(result.body, result.failureMessage), result.failureMessage).toEqual(expect.arrayContaining([
-    expect.objectContaining({ id: ntinda.id }),
+    expect.objectContaining({ id: ntindaPlace.id }),
   ]));
 });
 
@@ -69,7 +61,7 @@ test('TC-PLC-04 searching for an unknown location returns an empty list', {
 test('TC-PLC-05 a missing or invalid candidate key cannot list places', {
   tag: [lane.stateless, lane.negative, lane.security],
 }, async ({ controllers }) => {
-  for (const row of invalidKeyRows) {
+  for (const row of placesKeyRows) {
     await test.step(row.name, async () => {
       const result = await controllers.places.list({ auth: row.auth });
       expect(result.status, result.failureMessage).toBe(401);

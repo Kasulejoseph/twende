@@ -1,12 +1,9 @@
 import { randomUUID } from 'node:crypto';
 
-import { isRecord } from '../../src/helpers/guards';
-import { balanceOf, expectLedgerIdentity, recordId, sarahWallet, tripCharges } from '../support/common';
-import { expect, lane, resetTest } from '../support/fixtures';
+import { balanceOf, expectLedgerIdentity, recordId, sarahWallet, tripCharges } from '../../support/common';
+import { expect, lane, resetTest } from '../../support/fixtures';
 import { freshBodaEstimate } from './estimate';
-import { assignedDriver, storedRating, tripRecord } from './trip';
-
-const statusOrder = ['requested', 'accepted', 'arrived', 'in_progress', 'completed'] as const;
+import { assignedDriver, statusNames, statusOrder, storedRating, tripRecord } from './trip';
 
 resetTest('TC-E2E-01 a rider books a wallet trip, the driver completes it, and the rating and balance match the fare', {
   tag: [lane.stateful, lane.e2e, lane.billing],
@@ -96,14 +93,3 @@ resetTest('TC-E2E-02 a cash trip completed by the driver leaves the rider\'s wal
   expect(await balanceOf(controllers, rider.token), completed.failureMessage).toBe(rider.openingBalance);
   expect(await tripCharges(controllers, rider.token, tripId), completed.failureMessage).toEqual([]);
 });
-
-const statusNames = (history: unknown, failureMessage: string): readonly string[] => {
-  expect(Array.isArray(history), failureMessage).toBe(true);
-  const rows = Array.isArray(history) ? history : [];
-  return rows.map((row) => {
-    expect(isRecord(row), failureMessage).toBe(true);
-    const record = isRecord(row) ? row : {};
-    expect(typeof record.status, failureMessage).toBe('string');
-    return typeof record.status === 'string' ? record.status : '';
-  });
-};
