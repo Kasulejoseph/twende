@@ -47,7 +47,7 @@ Tag each spec with exactly one lane from `lane`: `@stateless`, `@stateful`, `@bo
 
 ## Coverage
 
-The suite has 106 cases. Ninety-five run. Eleven are `fixme` because the sandbox already fails them. Nothing is skipped.
+The suite has 106 cases. Ninety-four run. Twelve are `fixme` because the sandbox already fails them. Nothing is skipped.
 
 TC-TRP-10 runs on `@slow`: it waits out the five-minute quote and expects `410 ESTIMATE_EXPIRED`.
 
@@ -61,9 +61,24 @@ TC-TRP-10 runs on `@slow`: it waits out the five-minute quote and expects `410 E
 | TC-RAT-06 | DEF-006. A trip that is not completed can be rated. |
 | TC-ACC-03 | DEF-007. Two drivers can accept the same trip. |
 | TC-CHAT-03 | DEF-008. Chat returns the driver's full phone number. |
+| TC-CHAT-04 | DEF-011. Chat sometimes quotes a fare that is not on that trip. |
 | TC-CHAT-05 | DEF-009. Another rider can quote a trip they do not own. |
-| TC-CHAT-06 | DEF-010. Chat prints its hidden instructions and `STAFF100`. |
-| TC-TRP-03 | A `+03:00` departure is not stored as that same UTC instant. `defect.md` has no note for it.
+| TC-CHAT-06 | DEF-010. Chat prints its hidden instructions, including an internal staff code. |
+| TC-TRP-03 | A `+03:00` departure is not stored as that same UTC instant. `defect.md` has no note for it. |
 
 Run the suite with the commands above. `npm test` is every spec, one worker. A case that resets the sandbox needs `--workers=1`. CI shards only `@stateless`. Stateful, boda-assist, and slow share one queue so they do not reset the sandbox together.
+
+## With more time
+
+I would keep each spec as a list of cases, with inputs and readers beside it, as further cases are added.
+
+For chat, I would keep the live cases and add one saved reply. A wrong fare or a leaked instruction can then be checked without asking the model again.
+
+## AI Tool Usage
+
+I used AI tools to assist with test case design, review test coverage, and improve test structure. I reviewed and validated the generated suggestions before including them in the solution.
+
+AI-generated suggestions were not always accurate and sometimes required adjustments to match the application's actual behaviour, API contracts, and expected results. I verified these details against the implementation and test results rather than relying on AI output alone.
+
+All final test assertions, identified defects, and release recommendations were reviewed against the observed application behaviour.
 
