@@ -1,28 +1,19 @@
 # Defects
 
-Observed on 23 October 2026 against `https://staging-twende-backend.safeboda.com/api/qa-sandbox`. Rider is Sarah Nakato (`+256700100231`).
-
-DEF-001 and DEF-002 are the same balance error. After `POST /v1/_reset` her opening balance is 25000 UGX. An idempotent MTN top-up of 10000 is stored twice. The top-up response and the single ledger row still describe one credit.
-
-TC-TOP-08 is not this defect. The same idempotency key with a different amount returns 422 `IDEMPOTENCY_KEY_REUSED` and the wallet increases by 10000 only.
-
-DEF-003 is separate. The second page of `GET /v1/trips` is empty while `total` says those trips exist.
-
-DEF-004 is separate. Brian Okello (`+256700100487`) can read a trip that Sarah booked.
-
-DEF-005 is separate. Sarah can cancel a trip after Joseph Ssemanda has completed it.
-
-DEF-006 is separate. Sarah can rate a trip that is still `requested`.
-
-DEF-007 is separate. Joseph Ssemanda and Grace Achieng can both accept the same requested trip.
-
-DEF-008 is separate. Observed 24 October 2026. Support chat sometimes returns Joseph Ssemanda's full phone number for a completed trip.
-
-DEF-009 is separate. Observed 24 October 2026. Brian Okello (`+256700100487`) can get a fare quote for a trip Sarah booked.
-
-DEF-010 is separate. Observed 24 October 2026. Support chat prints its hidden instructions, including an internal staff code, when asked to ignore them.
-
-DEF-011 is separate. Observed 27 October 2026. Support chat sometimes quotes a fare that is not the fare on the trip id it was given.
+Summary 
+| Defect | Case | What fails |
+| --- | --- | --- |
+| [DEF-001](#def-001-replay-of-the-same-top-up-credits-the-wallet-twice) | TC-TOP-07 | Replaying the same top-up credits the wallet twice. |
+| [DEF-002](#def-002-concurrent-same-key-top-ups-credit-the-wallet-twice) | TC-TOP-09 | Two simultaneous top-ups with the same key both credit the wallet. |
+| [DEF-003](#def-003-trip-list-page-2-is-empty-while-total-counts-the-trips) | TC-LST-04 | Page 2 is empty while `total` counts the trips. |
+| [DEF-004](#def-004-another-rider-can-read-a-trip-they-do-not-own) | TC-GET-03 | Another rider can read a trip they do not own. |
+| [DEF-005](#def-005-a-completed-trip-can-still-be-cancelled) | TC-CAN-05 | A completed trip can still be cancelled. |
+| [DEF-006](#def-006-a-requested-trip-can-be-rated) | TC-RAT-06 | A trip that is not completed can be rated. |
+| [DEF-007](#def-007-two-drivers-can-accept-the-same-trip) | TC-ACC-03 | Two drivers can accept the same trip. |
+| [DEF-008](#def-008-support-chat-reveals-the-drivers-full-phone-number) | TC-CHAT-03 | Chat returns the driver's full phone number. |
+| [DEF-009](#def-009-another-rider-can-quote-a-trip-they-do-not-own) | TC-CHAT-05 | Another rider can quote a trip they do not own. |
+| [DEF-010](#def-010-support-chat-reveals-its-hidden-instructions) | TC-CHAT-06 | Chat prints its hidden instructions. |
+| [DEF-011](#def-011-support-chat-sometimes-quotes-the-wrong-fare-for-a-trip) | TC-CHAT-04 | Chat sometimes quotes a fare that is not on that trip. |
 
 ## DEF-001 Replay of the same top-up credits the wallet twice
 
