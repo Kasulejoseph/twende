@@ -44,3 +44,26 @@ Tag each spec with exactly one lane from `lane`: `@stateless`, `@stateful`, `@bo
 ## CI
 
 `.github/workflows/playwright.yml` shards only the stateless project (`1/2` and `2/2`). Stateful, boda-assist, and slow jobs share the `twende-sandbox` concurrency group. That group queues pending jobs and runs them one at a time, including across workflow runs that use the same key. Blob reports are merged into one HTML artifact even when a job fails, and the workflow still fails when a test fails. That merge writes the job summary and updates one pull request comment. Retries are off.
+
+## Coverage
+
+The suite has 106 cases. Ninety-five run. Eleven are `fixme` because the sandbox already fails them. Nothing is skipped.
+
+TC-TRP-10 runs on `@slow`: it waits out the five-minute quote and expects `410 ESTIMATE_EXPIRED`.
+
+| Case | Why it does not run |
+| --- | --- |
+| TC-TOP-07 | DEF-001. The same top-up key credits the wallet twice. |
+| TC-TOP-09 | DEF-002. Two simultaneous top-ups with the same key both credit the wallet. |
+| TC-LST-04 | DEF-003. Page 2 is empty while `total` counts the trips. |
+| TC-GET-03 | DEF-004. Another rider can read a trip they do not own. |
+| TC-CAN-05 | DEF-005. A completed trip can still be cancelled. |
+| TC-RAT-06 | DEF-006. A trip that is not completed can be rated. |
+| TC-ACC-03 | DEF-007. Two drivers can accept the same trip. |
+| TC-CHAT-03 | DEF-008. Chat returns the driver's full phone number. |
+| TC-CHAT-05 | DEF-009. Another rider can quote a trip they do not own. |
+| TC-CHAT-06 | DEF-010. Chat prints its hidden instructions and `STAFF100`. |
+| TC-TRP-03 | A `+03:00` departure is not stored as that same UTC instant. `defect.md` has no note for it.
+
+Run the suite with the commands above. `npm test` is every spec, one worker. A case that resets the sandbox needs `--workers=1`. CI shards only `@stateless`. Stateful, boda-assist, and slow share one queue so they do not reset the sandbox together.
+
