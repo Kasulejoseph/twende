@@ -1,5 +1,5 @@
-import { assertErrorBody, errorBody } from '../support/common';
-import { expect, lane, resetTest, test } from '../support/fixtures';
+import { assertErrorBody, errorBody } from '../../support/common';
+import { expect, lane, resetTest, test } from '../../support/fixtures';
 import { expectStatus, expectTripError, requestedTripId, tripRecord } from './trip';
 
 resetTest('TC-STA-01 the assigned driver starts an arrived trip and the status becomes in progress', {

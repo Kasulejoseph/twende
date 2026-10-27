@@ -1,10 +1,7 @@
-import type { ApiResult } from '../../src/client/api-client';
-import type { Controllers } from '../../src/controllers';
-import type { RatingRequest } from '../../src/types/api';
-import { starBoundaryCases } from '../data/ratings';
-import { recordId } from '../support/common';
-import { expect, lane, resetTest, test } from '../support/fixtures';
-import { advance, bookCash, expectTripError, storedRating, tripRecord } from './trip';
+import { starBoundaryCases } from '../../data/ratings';
+import { recordId } from '../../support/common';
+import { expect, lane, resetTest, test } from '../../support/fixtures';
+import { advance, bookCash, completedTripId, expectTripError, rate, storedRating, tripRecord } from './trip';
 
 resetTest('TC-RAT-01 a rider rates a completed trip and the comment is saved on the trip', {
   tag: [lane.stateful, lane.smoke, lane.trips, lane.rider, lane.rating],
@@ -121,22 +118,3 @@ test('TC-RAT-07 rating a trip id that does not exist returns trip not found', {
   const result = await rate(controllers, 'trp_DOESNOTEXIST', actors.sarah.token, { stars: 5 });
   expectTripError(result, 404, 'TRIP_NOT_FOUND');
 });
-
-const completedTripId = async (
-  controllers: Controllers,
-  riderToken: string,
-  driverToken: string,
-): Promise<string> => {
-  const created = await bookCash(controllers, riderToken);
-  const tripId = recordId(created.body, created.failureMessage);
-  // Joseph accepts, arrives, starts, and completes.
-  await advance(controllers, tripId, driverToken, 'complete');
-  return tripId;
-};
-
-const rate = (
-  controllers: Controllers,
-  tripId: string,
-  token: string,
-  body: RatingRequest | { readonly comment?: string },
-): Promise<ApiResult> => controllers.trips.rate(tripId, { auth: { token }, body });

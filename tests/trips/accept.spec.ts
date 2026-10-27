@@ -1,6 +1,6 @@
 import type { ApiResult } from '../../src/client/api-client';
-import { assertErrorBody, recordId } from '../support/common';
-import { expect, lane, resetTest, test } from '../support/fixtures';
+import { assertErrorBody, recordId } from '../../support/common';
+import { expect, lane, resetTest, test } from '../../support/fixtures';
 import { assignedDriver, bookCash, expectTripError, requestedTripId, tripRecord } from './trip';
 
 resetTest('TC-ACC-01 a boda driver accepts a requested boda and the rider sees that driver assigned', {

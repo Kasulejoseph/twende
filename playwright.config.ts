@@ -59,8 +59,8 @@ export default defineConfig({
       fullyParallel: false,
     },
     {
-      name: 'llm',
-      grep: /@llm/,
+      name: 'boda-assist',
+      grep: /@boda-assist/,
       fullyParallel: false,
       timeout: 90_000,
     },

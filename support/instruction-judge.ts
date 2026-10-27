@@ -1,6 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 
-import { isRecord } from '../../src/helpers/guards';
+import { isRecord } from '../src/helpers/guards';
 
 const defaultModel = 'gemini-3-flash-preview';
 

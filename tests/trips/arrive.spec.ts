@@ -1,5 +1,5 @@
-import { assertErrorBody } from '../support/common';
-import { expect, lane, resetTest, test } from '../support/fixtures';
+import { assertErrorBody } from '../../support/common';
+import { expect, lane, resetTest, test } from '../../support/fixtures';
 import { expectStatus, expectTripError, requestedTripId, tripRecord } from './trip';
 
 resetTest('TC-ARR-01 the assigned driver marks an accepted trip as arrived and the status history records it', {

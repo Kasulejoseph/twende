@@ -1,10 +1,6 @@
-import { randomUUID } from 'node:crypto';
-
-import type { Controllers } from '../../src/controllers';
-import { assertErrorBody, balanceOf, errorBody, expectLedgerIdentity, recordId, sarahWallet, tripCharges } from '../support/common';
-import { expect, lane, resetTest, test } from '../support/fixtures';
-import { freshBodaEstimate } from './estimate';
-import { expectStatus, expectTripError, requestedTripId, tripRecord } from './trip';
+import { assertErrorBody, balanceOf, errorBody, expectLedgerIdentity, sarahWallet, tripCharges } from '../../support/common';
+import { expect, lane, resetTest, test } from '../../support/fixtures';
+import { advance, expectStatus, expectTripError, requestedTripId, tripRecord, walletTrip } from './trip';
 
 resetTest('TC-CMP-01 completing a cash trip does not change the rider\'s wallet or add a trip charge', {
   tag: [lane.stateful, lane.smoke, lane.billing, lane.trips, lane.driver, lane.complete],
@@ -13,7 +9,7 @@ resetTest('TC-CMP-01 completing a cash trip does not change the rider\'s wallet 
   const driver = { token: actors.joseph.token };
   const tripId = await requestedTripId(controllers, rider);
   // The driver accepts, arrives, and starts a cash trip.
-  await reachInProgress(controllers, tripId, driver.token);
+  await advance(controllers, tripId, driver.token, 'start');
   const before = await balanceOf(controllers, rider);
 
   const result = await controllers.driver.complete(tripId, driver);
@@ -30,7 +26,7 @@ resetTest('TC-CMP-02 completing a wallet trip charges the fare once and the ledg
   const driver = { token: actors.joseph.token };
   const funded = await walletTrip(controllers, sarah.token, sarah.openingBalance);
   // The driver accepts, arrives, and starts.
-  await reachInProgress(controllers, funded.tripId, driver.token);
+  await advance(controllers, funded.tripId, driver.token, 'start');
   const before = await balanceOf(controllers, sarah.token);
 
   const result = await controllers.driver.complete(funded.tripId, driver);
@@ -52,7 +48,7 @@ resetTest('TC-CMP-03 a driver who is not assigned cannot complete the trip, and 
   const rider = actors.sarah.token;
   const tripId = await requestedTripId(controllers, rider);
   // The assigned driver gets the trip to in progress. Another driver tries to complete it.
-  await reachInProgress(controllers, tripId, actors.joseph.token);
+  await advance(controllers, tripId, actors.joseph.token, 'start');
   const before = await balanceOf(controllers, rider);
 
   const result = await controllers.driver.complete(tripId, { token: actors.grace.token });
@@ -106,7 +102,7 @@ resetTest('TC-CMP-05 completing a wallet trip a second time does not charge the 
   const driver = { token: actors.joseph.token };
   const funded = await walletTrip(controllers, sarah.token, sarah.openingBalance);
   // The driver completes the trip once.
-  await reachInProgress(controllers, funded.tripId, driver.token);
+  await advance(controllers, funded.tripId, driver.token, 'start');
   const first = await controllers.driver.complete(funded.tripId, driver);
   expect(first.status, first.failureMessage).toBe(200);
   const afterFirst = await balanceOf(controllers, sarah.token);
@@ -134,34 +130,3 @@ test('TC-CMP-06 completing an unknown trip returns not found, and an invalid key
     assertErrorBody(result.body, result.failureMessage);
   });
 });
-
-const reachInProgress = async (controllers: Controllers, tripId: string, driverToken: string): Promise<void> => {
-  const driver = { token: driverToken };
-  const accepted = await controllers.driver.accept(tripId, driver);
-  expect(accepted.status, accepted.failureMessage).toBe(200);
-  const arrived = await controllers.driver.arrive(tripId, driver);
-  expect(arrived.status, arrived.failureMessage).toBe(200);
-  const started = await controllers.driver.start(tripId, driver);
-  expect(started.status, started.failureMessage).toBe(200);
-};
-
-interface FundedTrip {
-  readonly tripId: string;
-  readonly fare: number;
-}
-
-const walletTrip = async (
-  controllers: Controllers,
-  token: string,
-  openingBalance: number,
-): Promise<FundedTrip> => {
-  const estimate = await freshBodaEstimate(controllers, token);
-  expect(estimate.fareAmount, 'estimate fare must fit the rider wallet').toBeLessThanOrEqual(openingBalance);
-  const booked = await controllers.trips.create({
-    auth: { token },
-    idempotencyKey: randomUUID(),
-    body: { estimate_id: estimate.id, payment_method: 'wallet' },
-  });
-  expect(booked.status, booked.failureMessage).toBe(201);
-  return { tripId: recordId(booked.body, booked.failureMessage), fare: estimate.fareAmount };
-};

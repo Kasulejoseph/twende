@@ -14,6 +14,7 @@ jobs:
     concurrency:
       group: ${{ matrix.concurrency }}
       cancel-in-progress: false
+      queue: max
     strategy:
       fail-fast: false
       matrix:
@@ -30,7 +31,7 @@ jobs:
             shard: 1/1
             workers: 1
             concurrency: twende-sandbox
-          - project: llm
+          - project: boda-assist
             shard: 1/1
             workers: 1
             concurrency: twende-sandbox
@@ -45,10 +46,10 @@ jobs:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       PLAYWRIGHT_BLOB_NAME: ${{ matrix.project }}-${{ strategy.job-index }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
-          node-version: lts/*
+          node-version: 24
           cache: npm
       - name: Install dependencies
         run: npm ci
@@ -58,7 +59,7 @@ jobs:
         run: npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }} --workers=${{ matrix.workers }}
       - name: Upload blob report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: blob-report-${{ matrix.project }}-${{ strategy.job-index }}
           path: blob-report/
@@ -70,20 +71,25 @@ jobs:
     if: always()
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
-          node-version: lts/*
+          node-version: 24
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           path: all-blob-reports
           pattern: blob-report-*
           merge-multiple: true
       - name: Merge Playwright reports
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           shopt -s nullglob
           zips=(all-blob-reports/*.zip)
@@ -91,10 +97,10 @@ jobs:
             echo "No Playwright blob reports were produced."
             exit 0
           fi
-          npx playwright merge-reports --reporter html ./all-blob-reports
+          npx playwright merge-reports --config=playwright.merge.config.ts ./all-blob-reports
       - name: Upload HTML report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: playwright-report
           path: playwright-report/

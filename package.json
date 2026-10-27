@@ -8,7 +8,7 @@
     "test:all": "playwright test --project=all",
     "test:stateless": "playwright test --project=stateless --workers=4",
     "test:stateful": "playwright test --project=stateful --workers=1",
-    "test:llm": "playwright test --project=llm --workers=1",
+    "test:boda-assist": "playwright test --project=boda-assist --workers=1",
     "test:slow": "playwright test --project=slow --workers=1",
     "test:smoke": "playwright test --grep @smoke --workers=1",
     "test:list": "playwright test --list",
@@ -28,6 +28,7 @@
   },
   "homepage": "https://github.com/Kasulejoseph/twende#readme",
   "devDependencies": {
+    "@estruyf/github-actions-reporter": "^1.13.0",
     "@google/genai": "^2.31.0",
     "@playwright/test": "^1.64.1",
     "@types/node": "^26.6.5",

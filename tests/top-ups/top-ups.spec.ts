@@ -1,13 +1,10 @@
 import { randomUUID } from 'node:crypto';
 
-import type { Controllers } from '../src/controllers';
-import { isRecord } from '../src/helpers/guards';
-import { invalidPhones } from './data/phones';
-import { topUpAmountCases } from './data/top-up-amounts';
-import { assertErrorBody, balanceOf, dataList, errorCode, mtnBody, nonEmptyString, sarahWallet } from './support/common';
-import { expect, lane, resetTest, test } from './support/fixtures';
-
-const topUpAmount = 10_000;
+import { invalidPhones } from '../../data/phones';
+import { standardTopUpAmount, topUpAmountCases } from '../../data/top-up-amounts';
+import { assertErrorBody, balanceOf, errorCode, mtnBody, nonEmptyString, sarahWallet } from '../../support/common';
+import { expect, lane, resetTest, test } from '../../support/fixtures';
+import { expectOneTopUp, topUpView } from './top-up';
 
 resetTest('TC-TOP-01 an MTN MoMo top-up increases the rider\'s wallet once', {
   tag: [lane.stateful, lane.smoke, lane.billing, lane.wallet, lane.topups],
@@ -19,15 +16,15 @@ resetTest('TC-TOP-01 an MTN MoMo top-up increases the rider\'s wallet once', {
   const result = await controllers.wallet.topUp({
     auth: { token: sarah.token },
     idempotencyKey: randomUUID(),
-    body: mtnBody(sarah.phone, topUpAmount),
+    body: mtnBody(sarah.phone, standardTopUpAmount),
   });
   expect(result.status, result.failureMessage).toBe(201);
 
   const topUp = topUpView(result.body, result.failureMessage);
   expect(topUp.status, result.failureMessage).toBe('successful');
-  expect(topUp.amount, result.failureMessage).toBe(topUpAmount);
+  expect(topUp.amount, result.failureMessage).toBe(standardTopUpAmount);
   expect(topUp.currency, result.failureMessage).toBe('UGX');
-  expect(topUp.wallet_balance_after, result.failureMessage).toBe(before + topUpAmount);
+  expect(topUp.wallet_balance_after, result.failureMessage).toBe(before + standardTopUpAmount);
 
   const after = await balanceOf(controllers, sarah.token);
   expect(after, result.failureMessage).toBe(topUp.wallet_balance_after);
@@ -59,7 +56,7 @@ resetTest('TC-TOP-03 a top-up with an unknown mobile-money provider is rejected'
   const result = await controllers.wallet.topUp({
     auth: { token: sarah.token },
     idempotencyKey: randomUUID(),
-    rawBody: JSON.stringify({ amount: topUpAmount, provider: 'paypal', phone: sarah.phone }),
+    rawBody: JSON.stringify({ amount: standardTopUpAmount, provider: 'paypal', phone: sarah.phone }),
   });
   expect(result.status, result.failureMessage).toBe(422);
   assertErrorBody(result.body, result.failureMessage);
@@ -80,7 +77,7 @@ resetTest('TC-TOP-04 a top-up with a malformed phone number is rejected and the 
       const result = await controllers.wallet.topUp({
         auth: { token: sarah.token },
         idempotencyKey: randomUUID(),
-        body: mtnBody(row.phone, topUpAmount),
+        body: mtnBody(row.phone, standardTopUpAmount),
       });
       expect(result.status, result.failureMessage).toBe(422);
       assertErrorBody(result.body, result.failureMessage);
@@ -143,7 +140,7 @@ resetTest.fixme('TC-TOP-07 replaying the same top-up key and body credits the wa
   const sarah = sarahWallet(actors);
   const before = await balanceOf(controllers, sarah.token);
   const idempotencyKey = randomUUID();
-  const body = mtnBody(sarah.phone, topUpAmount);
+  const body = mtnBody(sarah.phone, standardTopUpAmount);
   const created = await controllers.wallet.topUp({
     auth: { token: sarah.token },
     idempotencyKey,
@@ -164,7 +161,7 @@ resetTest.fixme('TC-TOP-07 replaying the same top-up key and body credits the wa
   expect(replayTopUp.wallet_balance_after, replay.failureMessage).toBe(createdTopUp.wallet_balance_after);
 
   const after = await balanceOf(controllers, sarah.token);
-  expect(after, replay.failureMessage).toBe(before + topUpAmount);
+  expect(after, replay.failureMessage).toBe(before + standardTopUpAmount);
   await expectOneTopUp(controllers, sarah.token, createdTopUp.id);
 });
 
@@ -177,7 +174,7 @@ resetTest('TC-TOP-08 reusing a top-up key with a different amount is rejected an
   const created = await controllers.wallet.topUp({
     auth: { token: sarah.token },
     idempotencyKey,
-    body: mtnBody(sarah.phone, topUpAmount),
+    body: mtnBody(sarah.phone, standardTopUpAmount),
   });
   expect(created.status, created.failureMessage).toBe(201);
 
@@ -191,10 +188,10 @@ resetTest('TC-TOP-08 reusing a top-up key with a different amount is rejected an
   expect(errorCode(reused.body), reused.failureMessage).toBe('IDEMPOTENCY_KEY_REUSED');
 
   const after = await balanceOf(controllers, sarah.token);
-  expect(after, reused.failureMessage).toBe(before + topUpAmount);
+  expect(after, reused.failureMessage).toBe(before + standardTopUpAmount);
 });
 
-resetTest.fixme('TC-TOP-09 two simultaneous top-ups with the same key credit the wallet only once', {
+resetTest('TC-TOP-09 two simultaneous top-ups with the same key credit the wallet only once', {
   tag: [lane.stateful, lane.concurrency, lane.billing, lane.idempotency, lane.wallet, lane.topups, lane.bug],
 }, async ({ actors, controllers }) => {
   const sarah = sarahWallet(actors);
@@ -204,7 +201,7 @@ resetTest.fixme('TC-TOP-09 two simultaneous top-ups with the same key credit the
   const input = {
     auth: { token: sarah.token },
     idempotencyKey: randomUUID(),
-    body: mtnBody(sarah.phone, topUpAmount),
+    body: mtnBody(sarah.phone, standardTopUpAmount),
   };
   const [left, right] = await Promise.all([
     controllers.wallet.topUp(input),
@@ -243,15 +240,3 @@ test('TC-TOP-10 a top-up body that is not valid JSON is rejected', {
   const after = await balanceOf(controllers, sarah.token);
   expect(after, result.failureMessage).toBe(before);
 });
-
-const topUpView = (body: unknown, failureMessage: string): Record<string, unknown> => {
-  expect(isRecord(body), failureMessage).toBe(true);
-  return isRecord(body) ? body : {};
-};
-
-const expectOneTopUp = async (controllers: Controllers, token: string, topUpId: unknown): Promise<void> => {
-  const ledger = await controllers.wallet.transactions({ token });
-  expect(ledger.status, ledger.failureMessage).toBe(200);
-  const rows = dataList(ledger.body, ledger.failureMessage).filter((row) => row.type === 'top_up' && row.reference === topUpId);
-  expect(rows, ledger.failureMessage).toHaveLength(1);
-};

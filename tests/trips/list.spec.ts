@@ -1,8 +1,7 @@
-import { isRecord } from '../../src/helpers/guards';
-import { invalidPagingCases } from '../data/paging';
-import { assertErrorBody, dataList, recordId } from '../support/common';
-import { expect, lane, resetTest, test } from '../support/fixtures';
-import { bookCash } from './trip';
+import { invalidPagingCases } from '../../data/paging';
+import { assertErrorBody, recordId } from '../../support/common';
+import { expect, lane, resetTest, test } from '../../support/fixtures';
+import { bookCash, tripPage } from './trip';
 
 test('TC-LST-01 a rider\'s trip list returns a page of their trips after they book one', {
   tag: [lane.stateful, lane.smoke, lane.trips, lane.rider],
@@ -136,22 +135,3 @@ resetTest('TC-LST-08 one rider\'s trip list does not include a trip another ride
   const page = tripPage(result.body, result.failureMessage);
   expect(page.rows.map((row) => row.id), result.failureMessage).not.toContain(tripId);
 });
-
-interface TripPage {
-  readonly page: unknown;
-  readonly pageSize: unknown;
-  readonly total: number;
-  readonly rows: readonly Record<string, unknown>[];
-}
-
-const tripPage = (body: unknown, failureMessage: string): TripPage => {
-  expect(isRecord(body), failureMessage).toBe(true);
-  const record = isRecord(body) ? body : {};
-  expect(typeof record.total, failureMessage).toBe('number');
-  return {
-    page: record.page,
-    pageSize: record.page_size,
-    total: typeof record.total === 'number' ? record.total : 0,
-    rows: dataList(body, failureMessage),
-  };
-};

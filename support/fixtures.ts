@@ -1,9 +1,9 @@
 import { test as base, expect } from '@playwright/test';
 
-import { ApiClient } from '../../src/client/api-client';
-import { getConfig } from '../../src/config/env';
-import { createControllers, type Controllers } from '../../src/controllers';
-import type { Actors } from '../../src/types/actors';
+import { ApiClient } from '../src/client/api-client';
+import { getConfig } from '../src/config/env';
+import { createControllers, type Controllers } from '../src/controllers';
+import type { Actors } from '../src/types/actors';
 
 interface FrameworkFixtures {
   api: ApiClient;

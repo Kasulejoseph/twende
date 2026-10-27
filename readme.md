@@ -2,7 +2,7 @@
 
 Playwright API tests for the Twende QA sandbox. Controllers issue HTTP calls. Specs own the assertions. One candidate key owns the sandbox, so anything that calls `POST /v1/_reset` runs one test at a time.
 
-`npm test` runs every spec in the `all` project. Lane commands still select `@stateless`, `@stateful`, `@llm`, and `@slow`.
+`npm test` runs every spec in the `all` project. Lane commands still select `@stateless`, `@stateful`, `@boda-assist`, and `@slow`.
 
 ## Setup
 
@@ -23,7 +23,7 @@ Set `GEMINI_API_KEY` in `.env` for the support-chat instruction judge. In GitHub
 | `npm run test:all` | Same as `npm test` |
 | `npm run test:stateless` | `@stateless` only |
 | `npm run test:stateful` | `@stateful` with `--workers=1` |
-| `npm run test:llm` | `@llm` with `--workers=1` |
+| `npm run test:boda-assist` | `@boda-assist` with `--workers=1` |
 | `npm run test:slow` | `@slow` with `--workers=1` |
 | `npm run test:smoke` | `@smoke` with `--workers=1` |
 | `npx playwright test -g TC-PLC-02` | One case. Add `--workers=1` if the case resets the sandbox |
@@ -35,15 +35,15 @@ The config default is one worker. `npm test` uses the `all` project, so lane tag
 
 - `src/client` sets auth headers, redacts credentials in failure text, and fails the test on HTTP 500. Expected 4xx responses are returned to the spec. Playwright owns the base URL, the JSON body, and the failure trace.
 - `src/controllers` maps one endpoint group each and does not assert.
-- `tests/support/fixtures.ts` injects `api`, `actors`, and `controllers`.
-- `tests/data` holds the shared input tables.
+- `support/fixtures.ts` injects `api`, `actors`, and `controllers`.
+- Specs hold the test cases. `data` holds the inputs. Area modules next to a spec hold that spec's readers and setup.
 - Specs assert with Playwright `expect` and pass `result.failureMessage` as the message.
 
-Tag each spec with exactly one lane from `lane`: `@stateless`, `@stateful`, `@llm`, or `@slow`. `@smoke` may be added beside a lane. Stateless tests must not reset the sandbox or read wallet or trip state.
+Tag each spec with exactly one lane from `lane`: `@stateless`, `@stateful`, `@boda-assist`, or `@slow`. `@smoke` may be added beside a lane. Stateless tests must not reset the sandbox or read wallet or trip state.
 
 ## CI
 
-`.github/workflows/playwright.yml` shards only the stateless project (`1/2` and `2/2`). Stateful, LLM, and slow jobs share the `twende-sandbox` concurrency group so they queue, including across workflow runs that use the same key. Blob reports are merged into one HTML artifact even when a job fails. Retries are off.
+`.github/workflows/playwright.yml` shards only the stateless project (`1/2` and `2/2`). Stateful, boda-assist, and slow jobs share the `twende-sandbox` concurrency group. That group queues pending jobs and runs them one at a time, including across workflow runs that use the same key. Blob reports are merged into one HTML artifact even when a job fails. That merge writes the job summary and updates one pull request comment. Retries are off.
 
 ## Results
 
